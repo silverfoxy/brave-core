@@ -69,6 +69,8 @@ import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import androidx.core.widget.NestedScrollView;
+
 
 public class NTPUtil {
     private static final int BOTTOM_TOOLBAR_HEIGHT = 56;
@@ -85,15 +87,18 @@ public class NTPUtil {
     public static void updateOrientedUI(Context context, ViewGroup view, Point size) {
         LinearLayout parentLayout = (LinearLayout)view.findViewById(R.id.parent_layout);
         ViewGroup mainLayout = view.findViewById(R.id.ntp_main_layout);
+        NestedScrollView nestedScrollView = (NestedScrollView)view.findViewById(R.id.nestedScrollView);
         ViewGroup imageCreditLayout = view.findViewById(R.id.image_credit_layout);
 
         ImageView sponsoredLogo = (ImageView)view.findViewById(R.id.sponsored_logo);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(dpToPx(context, 170), dpToPx(context, 170));
 
-        parentLayout.removeView(mainLayout);
+        parentLayout.removeView(nestedScrollView);
+        // parentLayout.removeView(mainLayout);
         parentLayout.removeView(imageCreditLayout);
 
-        parentLayout.addView(mainLayout);
+        parentLayout.addView(nestedScrollView);
+        // parentLayout.addView(mainLayout);
         parentLayout.addView(imageCreditLayout);
 
         parentLayout.setOrientation(LinearLayout.VERTICAL);
@@ -110,10 +115,15 @@ public class NTPUtil {
                 dpToPx(context, 140));
         widgetLayout.setLayoutParams(widgetLayoutParams);
 
-        LinearLayout.LayoutParams mainLayoutLayoutParams =
-                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0);
-        mainLayoutLayoutParams.weight = 1f;
-        mainLayout.setLayoutParams(mainLayoutLayoutParams);
+        // LinearLayout.LayoutParams mainLayoutLayoutParams =
+        //         new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0);
+        // mainLayoutLayoutParams.weight = 1f;
+        // mainLayout.setLayoutParams(mainLayoutLayoutParams);      
+
+         NestedScrollView.LayoutParams nestedScrollViewLayoutParams =
+                new NestedScrollView.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+        // mainLayoutLayoutParams.weight = 1f;
+        // nestedScrollView.setLayoutParams(nestedScrollViewLayoutParams);
 
         LinearLayout.LayoutParams imageCreditLayoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);

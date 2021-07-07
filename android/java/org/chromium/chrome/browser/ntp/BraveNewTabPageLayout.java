@@ -18,6 +18,8 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
+import androidx.core.view.ViewCompat;
+
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -42,7 +44,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
+import androidx.core.widget.NestedScrollView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.os.Looper;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.core.widget.ImageViewCompat;
@@ -116,6 +121,10 @@ import org.chromium.components.browser_ui.widget.displaystyle.UiConfig;
 import org.chromium.components.user_prefs.UserPrefs;
 import org.chromium.ui.base.WindowAndroid;
 import org.chromium.ui.widget.Toast;
+import org.chromium.chrome.browser.brave_news.BraveNewsAdapter;
+import org.chromium.chrome.browser.brave_news.BraveNewsUtils;
+import org.chromium.chrome.browser.brave_news.models.NewsItem;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -127,7 +136,7 @@ import java.util.TreeMap;
 
 public class BraveNewTabPageLayout
         extends NewTabPageLayout implements CryptoWidgetBottomSheetDialogFragment
-                                                    .CryptoWidgetBottomSheetDialogDismissListener {
+                                                    .CryptoWidgetBottomSheetDialogDismissListener, BraveNewsAdapter.RecycleItemClickListener {
     private static final String TAG = "BraveNewTabPageView";
     private static final String BRAVE_BINANCE = "https://brave.com/binance/";
     private static final String BRAVE_REF_URL = "https://brave.com/r/";
@@ -169,6 +178,21 @@ public class BraveNewTabPageLayout
     private List<NTPWidgetItem> widgetList = new ArrayList<NTPWidgetItem>();
     public static final int NTP_WIDGET_STACK_CODE = 3333;
 
+    // Brave news
+    private BraveNewsAdapter adapter;
+    private Button optinButton;
+    private LinearLayout optinLayout;
+    private CopyOnWriteArrayList<NewsItem> newsItems = new CopyOnWriteArrayList<NewsItem>();
+    // private RecyclerViewReadyCallback recyclerViewReadyCallback;
+    private LinearLayout container;
+    private RecyclerView recyclerView;
+    private NestedScrollView nestedScrollView;
+    private TextView loading;
+    private View loadingView;
+
+    // public interface RecyclerViewReadyCallback {
+    //     void onLayoutReady();
+    // }
     public BraveNewTabPageLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
         mProfile = Profile.getLastUsedRegularProfile();
@@ -435,6 +459,9 @@ public class BraveNewTabPageLayout
                     R.dimen.tile_grid_layout_vertical_spacing);
         }
         mSiteSectionView.setLayoutParams(layoutParams);
+
+        
+
     }
 
     @Override
@@ -467,6 +494,8 @@ public class BraveNewTabPageLayout
         }
         mBinanceNativeWorker.AddObserver(mBinanaceObserver);
         startTimer();
+initNews();
+
     }
 
     @Override
@@ -512,6 +541,67 @@ public class BraveNewTabPageLayout
         }
     }
 
+    private void initNews() {
+        Log.d("test", "in initNews");
+        recyclerView = findViewById(R.id.newsRecycler);
+        container = (LinearLayout) findViewById(R.id.ntp_main_layout);
+        nestedScrollView = findViewById(R.id.nestedScrollView);
+        optinButton = findViewById(R.id.optin_button);
+        optinLayout = findViewById(R.id.optin_layout_id);
+        loading = findViewById(R.id.loading);
+        loadingView = findViewById(R.id.loading_spinner);
+
+        recyclerView.setItemViewCacheSize(20);
+        recyclerView.setDrawingCacheEnabled(true);
+        recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+
+        recyclerView.setVisibility(View.GONE);
+        recyclerView.setLayoutManager(new LinearLayoutManager(mActivity));
+        ViewCompat.setNestedScrollingEnabled(recyclerView, true);
+
+        adapter = new BraveNewsAdapter(mActivity, newsItems);
+        recyclerView.setAdapter(adapter);
+        // adapter.setClickListener(this);
+        loadingView.setVisibility(View.GONE);
+
+        optinButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.d("test", "optin click");
+                        optinLayout.setVisibility(View.GONE);
+                        loadingView.setVisibility(View.VISIBLE);
+
+                        new Thread( new Runnable() { @Override public void run() {
+                            Log.d("test", "getting feed...");
+                            getFeed();
+                            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Log.d("test", "optin click after");
+
+                                    loadingView.setVisibility(View.GONE);
+
+                                    container.setVisibility(View.VISIBLE);
+                                    recyclerView.setVisibility(View.VISIBLE);
+                                    // nestedScrollView.setVisibility(View.VISIBLE);
+                                    // preferences.setOptIn(true);
+                                    adapter.notifyDataSetChanged();
+                                }
+                            }, 1000);
+
+                        } } ).start();
+
+
+                    }
+                });
+    }
+
+    private void getFeed() {
+        BraveNewsUtils utils = new BraveNewsUtils(mActivity);
+        newsItems = utils.parseJson(newsItems);
+        Log.d("test", "end parse");
+    }
+
     @Override
     public void initialize(NewTabPageManager manager, Activity activity,
             TileGroup.Delegate tileGroupDelegate, boolean searchProviderHasLogo,
@@ -526,6 +616,7 @@ public class BraveNewTabPageLayout
         assert (activity instanceof BraveActivity);
         mActivity = activity;
         ((BraveActivity) mActivity).dismissShieldsTooltip();
+         
     }
 
     private void showNTPImage(NTPImage ntpImage) {
@@ -661,6 +752,7 @@ public class BraveNewTabPageLayout
                 initilizeSponsoredTab();
             }
             checkAndShowNTPImage(false);
+            
         }
 
         @Override
@@ -683,6 +775,7 @@ public class BraveNewTabPageLayout
                 }
             }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
+
     };
 
     private NTPBackgroundImagesBridge.NTPBackgroundImageServiceObserver mNTPBackgroundImageServiceObserver = new NTPBackgroundImagesBridge.NTPBackgroundImageServiceObserver() {
@@ -1002,4 +1095,19 @@ public class BraveNewTabPageLayout
     public void onCryptoWidgetBottomSheetDialogDismiss() {
         startTimer();
     }
+
+    @Override
+    public void onCloseClick(View view) {
+        Log.d("Test", "close click");
+    }
+    
+    @Override
+    public void onOptInClick(View view) {
+        Log.d("Test", "optin click");
+    }
+
+    @Override
+    public void onItemClick(View view, int position) {
+        Log.d("test", "You clicked " + adapter.getItem(position) + " on row number " + position);
+    }    
 }
