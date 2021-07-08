@@ -9,13 +9,5 @@
     android:layout_margin="20dp"
     >
 
-    <TextView
-        android:id="@+id/item"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Test"
-        android:textColor="#ff33"
-        android:visibility="gone"
-        android:textSize="20sp"/>
 
 </LinearLayout>

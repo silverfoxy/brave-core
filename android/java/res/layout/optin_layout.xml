@@ -39,32 +39,54 @@
         android:id="@+id/optin_subtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="30dp"
         android:paddingHorizontal="30dp"
         android:text="@string/brave_news_optin_subtitle"
         android:textAlignment="center"
         android:textColor="@color/news_text_color"
         android:textSize="15sp" />
 
-    <Button
+    <FrameLayout
         android:id="@+id/optin_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAllCaps="false"
         android:layout_gravity="center"
-        android:textStyle="normal"
-        android:textSize="14sp"
-        android:layout_marginHorizontal="60dp"
         android:background="@drawable/news_button_bg"
-        android:text="@string/brave_news_optin_button" />
+        android:layout_marginHorizontal="60dp"
+        android:orientation="horizontal">
+
+
+        <ProgressBar
+            android:id="@+id/optin_loading_spinner"
+            style="?android:progressBarStyleLarge"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:visibility="gone"
+            android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/optin_button_text"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:paddingHorizontal="40dp"
+            android:textAlignment="center"
+            android:text="@string/brave_news_optin_button"
+            android:textColor="@color/news_text_color"
+            android:layout_gravity="center"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textStyle="normal"
+            android:gravity="center" />
+
+    </FrameLayout>
 
     <TextView
         android:id="@+id/optin_learnmore"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="30dp"
         android:paddingHorizontal="30dp"
         android:text="@string/brave_news_optin_learn_more"
         android:textAlignment="center"

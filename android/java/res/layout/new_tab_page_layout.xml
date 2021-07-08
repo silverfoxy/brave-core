@@ -15,6 +15,8 @@
     android:paddingTop="@dimen/toolbar_height_no_shadow"
     android:visibility="gone" >
 
+
+
     <ImageView
         android:id="@+id/bg_image_view"
         android:layout_width="match_parent"
@@ -49,167 +51,169 @@
         android:id="@+id/parent_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center_horizontal"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_gravity="center_horizontal" >
 
-        <androidx.core.widget.NestedScrollView
-            android:id="@+id/nestedScrollView"
+        <LinearLayout
+            android:id="@+id/ntp_main_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:overScrollMode="never"
-            android:visibility="visible">
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+<!--         <include
+            android:id="@+id/news_settings_bar_layout_id"
+            layout="@layout/brave_news_settings_bar_layout"
+            android:layout_marginTop="26dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            /> -->
 
             <LinearLayout
-                android:id="@+id/ntp_main_layout"
+                android:id="@+id/ntp_widget_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginBottom="12dp"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/ntp_widget_cardview_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:layout_gravity="center_horizontal"
+                    app:cardCornerRadius="12dp">
+
+                    <org.chromium.chrome.browser.custom_layout.VerticalViewPager
+                        android:id="@+id/ntp_widget_view_pager"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+
+                </androidx.cardview.widget.CardView>
+
+                <LinearLayout
+                    android:id="@+id/indicator_layout"
+                    android:layout_width="12dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/ntp_widget_indicator_bg"
+                    android:padding="2dp"
+                    android:orientation="vertical"/>
+
+            </LinearLayout>
+
+
+            <FrameLayout
+                android:id="@+id/image_credit_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/credit_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|bottom"
+                    android:background="@drawable/image_credit_rounded_shape"
+                    android:padding="5dp"
+                    android:layout_margin="10dp"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:textColor = "@android:color/white"/>
+
+                <ImageView
+                    android:id="@+id/sponsored_logo"
+                    android:layout_width="170dp"
+                    android:layout_height="170dp"
+                    android:contentDescription="@null"
+                    android:visibility="gone"/>
+
+            </FrameLayout>
+
+
+            <include
+                android:id="@+id/optin_layout_id"
+                layout="@layout/optin_layout"
+                android:layout_marginTop="-66dp"
+                android:layout_marginBottom="300dp"
+                android:layout_marginHorizontal="30dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+
+            <!-- Search box -->
+            <include layout="@layout/fake_search_box_layout"/>
+
+            <!-- Query tiles -->
+            <FrameLayout
+                android:id="@+id/query_tiles"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"/>
+
+            <!-- Video tutorial IPH card -->
+            <ViewStub
+                android:id="@+id/video_iph_stub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout="@layout/video_tutorial_iph_card"
+                android:inflatedId="@+id/video_iph_card"/>
+
+            <!-- Middle spacer -->
+            <View
+                android:id="@+id/ntp_middle_spacer"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                tools:ignore="NestedWeights"
+                android:layout_weight="0"
+                android:visibility="invisible" />
+
+            <!-- Insertion point of the SiteSectionView, see NewTabPageLayout#insertSiteSection() -->
+
+            <ViewStub
+                android:id="@+id/explore_sites_stub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inflatedId="@+id/explore_sites"
+                android:layout_marginBottom="16dp"
+                android:layout="@layout/explore_sites_section" />
+
+            <!-- Site suggestion tile grid placeholder -->
+            <ViewStub
+                android:id="@+id/tile_grid_placeholder_stub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inflatedId="@+id/tile_grid_placeholder"
+                android:layout="@layout/new_tab_page_tile_grid_placeholder" />
+
+            <!-- Spacer for when there is no search provider logo. -->
+            <View
+                android:id="@+id/no_search_logo_spacer"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:visibility="gone" />
 
-                <LinearLayout
-                    android:id="@+id/ntp_widget_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginBottom="12dp"
-                    android:gravity="center_horizontal"
-                    android:orientation="horizontal">
 
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/ntp_widget_cardview_layout"
-                        android:layout_width="match_parent"
-                        android:layout_height="140dp"
-                        android:layout_gravity="center_horizontal"
-                        app:cardCornerRadius="12dp">
-
-                        <org.chromium.chrome.browser.custom_layout.VerticalViewPager
-                            android:id="@+id/ntp_widget_view_pager"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"/>
-
-                    </androidx.cardview.widget.CardView>
-
-                    <LinearLayout
-                        android:id="@+id/indicator_layout"
-                        android:layout_width="12dp"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:background="@drawable/ntp_widget_indicator_bg"
-                        android:padding="2dp"
-                        android:orientation="vertical"/>
-
-                </LinearLayout>
-
-                <include
-                    android:id="@+id/optin_layout_id"
-                    layout="@layout/optin_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="500dp"
-                    android:layout_marginHorizontal="30dp"
-                    android:layout_marginBottom="300dp" />
-
-                <ProgressBar android:id="@+id/loading_spinner"
-                    style="?android:progressBarStyleLarge"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="500dp"
-                    android:layout_gravity="center" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/newsRecycler"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-
-                <!-- Search box -->
-                <include layout="@layout/fake_search_box_layout"/>
-
-                <!-- Query tiles -->
-                <FrameLayout
-                    android:id="@+id/query_tiles"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:visibility="gone"/>
-
-                <!-- Video tutorial IPH card -->
-                <ViewStub
-                    android:id="@+id/video_iph_stub"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:layout="@layout/video_tutorial_iph_card"
-                    android:inflatedId="@+id/video_iph_card"/>
-
-                <!-- Middle spacer -->
-                <View
-                    android:id="@+id/ntp_middle_spacer"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="0"
-                    android:visibility="invisible" />
-
-                <!-- Insertion point of the SiteSectionView, see NewTabPageLayout#insertSiteSection() -->
-
-                <ViewStub
-                    android:id="@+id/explore_sites_stub"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inflatedId="@+id/explore_sites"
-                    android:layout_marginBottom="16dp"
-                    android:layout="@layout/explore_sites_section" />
-
-                <!-- Site suggestion tile grid placeholder -->
-                <ViewStub
-                    android:id="@+id/tile_grid_placeholder_stub"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:inflatedId="@+id/tile_grid_placeholder"
-                    android:layout="@layout/new_tab_page_tile_grid_placeholder" />
-
-                <!-- Spacer for when there is no search provider logo. -->
-                <View
-                    android:id="@+id/no_search_logo_spacer"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:visibility="gone" />
-
-            </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
-
-        <FrameLayout
-            android:id="@+id/image_credit_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/credit_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start|bottom"
-                android:background="@drawable/image_credit_rounded_shape"
-                android:padding="5dp"
-                android:layout_margin="10dp"
-                android:textSize="12sp"
-                android:visibility="gone"
-                android:textColor = "@android:color/white"/>
-
-            <ImageView
-                android:id="@+id/sponsored_logo"
-                android:layout_width="170dp"
-                android:layout_height="170dp"
-                android:contentDescription="@null"
-                android:visibility="gone"/>
-
-        </FrameLayout>
+        </LinearLayout>
 
     </LinearLayout>
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/newsRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+         />
+
     <include layout="@layout/ntp_non_disruptive_banner"/>
     <include layout="@layout/bre_bottom_banner"/>
+
+
+
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/super_referral_logo"
@@ -222,5 +226,7 @@
         android:contentDescription="@null"
         android:visibility="gone"
         app:backgroundTint="@color/qr_button_color"/>
+
+
 
 </org.chromium.chrome.browser.ntp.BraveNewTabPageLayout>

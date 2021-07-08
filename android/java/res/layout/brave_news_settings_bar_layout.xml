@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/news_settings_bar"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:background="@color/card_background_solid"
+    android:orientation="horizontal"
+    android:alpha="0"
+    android:paddingHorizontal="20dp">
+
+    <TextView
+        android:id="@+id/news_settings_text"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="5"
+        android:gravity="center_vertical"
+        android:text="@string/brave_news_title"
+        android:textColor="@color/news_text_color" />
+
+    <ImageView
+        android:id="@+id/news_settings_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+                android:layout_gravity="center"
+        android:gravity="center"
+        android:background="@drawable/ic_news_settings"/>
+
+</LinearLayout>

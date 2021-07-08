@@ -62,6 +62,7 @@ import org.chromium.chrome.browser.util.PackageUtils;
 import org.chromium.components.user_prefs.UserPrefs;
 import org.chromium.content_public.browser.LoadUrlParams;
 import org.chromium.ui.base.DeviceFormFactor;
+import org.chromium.chrome.browser.compositor.CompositorViewHolder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,27 +86,41 @@ public class NTPUtil {
     }
 
     public static void updateOrientedUI(Context context, ViewGroup view, Point size) {
+        Log.d("bn", "optin click after");
         LinearLayout parentLayout = (LinearLayout)view.findViewById(R.id.parent_layout);
-        ViewGroup mainLayout = view.findViewById(R.id.ntp_main_layout);
-        NestedScrollView nestedScrollView = (NestedScrollView)view.findViewById(R.id.nestedScrollView);
+        CompositorViewHolder compositorView =  view.findViewById(R.id.compositor_view_holder);
+        // NestedScrollView nestedScrollView = (NestedScrollView)view.findViewById(R.id.nestedScrollView);
         ViewGroup imageCreditLayout = view.findViewById(R.id.image_credit_layout);
+        ViewGroup optinLayout = view.findViewById(R.id.optin_layout_id);
+        ViewGroup newsRecycler = view.findViewById(R.id.newsRecycler);
+        ViewGroup mainLayout = view.findViewById(R.id.ntp_main_layout);
 
         ImageView sponsoredLogo = (ImageView)view.findViewById(R.id.sponsored_logo);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(dpToPx(context, 170), dpToPx(context, 170));
 
-        parentLayout.removeView(nestedScrollView);
-        // parentLayout.removeView(mainLayout);
-        parentLayout.removeView(imageCreditLayout);
+        // View first = compositorView.getChildAt(0);
+        // View second = compositorView.getChildAt(1);
 
-        parentLayout.addView(nestedScrollView);
-        // parentLayout.addView(mainLayout);
-        parentLayout.addView(imageCreditLayout);
+        Log.d("BN", "first compositorView:"+compositorView);
+        // Log.d("BN", "first child:"+first);
+        // Log.d("BN", "second child:"+second);
+
+        // parentLayout.removeView(nestedScrollView);
+        parentLayout.removeView(mainLayout);
+        // parentLayout.removeView(imageCreditLayout);
+
+
+        // parentLayout.addView(nestedScrollView);
+        parentLayout.addView(mainLayout);
+        // parentLayout.addView(imageCreditLayout);
+
 
         parentLayout.setOrientation(LinearLayout.VERTICAL);
 
         boolean isTablet = DeviceFormFactor.isNonMultiDisplayContextOnTablet(context);
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
         float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
+        float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
         CardView widgetLayout = (CardView) view.findViewById(R.id.ntp_widget_cardview_layout);
         LinearLayout.LayoutParams widgetLayoutParams = new LinearLayout.LayoutParams(
                 (isTablet ? (int) (dpWidth * 0.75)
@@ -115,22 +130,32 @@ public class NTPUtil {
                 dpToPx(context, 140));
         widgetLayout.setLayoutParams(widgetLayoutParams);
 
-        // LinearLayout.LayoutParams mainLayoutLayoutParams =
-        //         new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0);
-        // mainLayoutLayoutParams.weight = 1f;
-        // mainLayout.setLayoutParams(mainLayoutLayoutParams);      
+        LinearLayout.LayoutParams mainLayoutLayoutParams =
+                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0);
+        mainLayoutLayoutParams.weight = 1f;
+        mainLayout.setLayoutParams(mainLayoutLayoutParams);      
 
          NestedScrollView.LayoutParams nestedScrollViewLayoutParams =
                 new NestedScrollView.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
         // mainLayoutLayoutParams.weight = 1f;
         // nestedScrollView.setLayoutParams(nestedScrollViewLayoutParams);
 
+        Log.d("BN", "dpHeight: "+dpHeight);
+
         LinearLayout.LayoutParams imageCreditLayoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        imageCreditLayoutParams.setMargins(0, dpToPx(context, (int) (dpHeight * 0.55)), 0, 0);
         imageCreditLayout.setLayoutParams(imageCreditLayoutParams);
 
-        layoutParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        layoutParams.setMargins(0, 0, 0, dpToPx(context, 5));
+        Log.d("bn", "imageCreditLayout bottom:" + imageCreditLayout.getBottom());
+
+        LinearLayout.LayoutParams optinLayoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        optinLayoutParams.setMargins(30, imageCreditLayout.getBottom(), 30, 500);
+        optinLayout.setLayoutParams(optinLayoutParams);
+
+        layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
+        // layoutParams.setMargins(0, 400, 0, dpToPx(context, 5));
+        // layoutParams.setMargins(0, 400, 0, 0);
         sponsoredLogo.setLayoutParams(layoutParams);
     }
 

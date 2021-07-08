@@ -577,6 +577,7 @@ brave_java_resources = [
   "java/res/drawable/ic_bg_video_playback.xml",
   "java/res/drawable/ic_binance.xml",
   "java/res/drawable/ic_brave.xml",
+  "java/res/drawable/ic_news.xml",
   "java/res/drawable/ic_brave_logo.xml",
   "java/res/drawable/ic_carat_down.xml",
   "java/res/drawable/ic_checkbox_filled.xml",
@@ -638,6 +639,7 @@ brave_java_resources = [
   "java/res/drawable/ic_swap_bg.xml",
   "java/res/drawable/ic_swap_icon.xml",
   "java/res/drawable/ic_sync.xml",
+  "java/res/drawable/ic_news_settings.xml",
   "java/res/drawable/ic_thank_you.xml",
   "java/res/drawable/ic_toggle_down.xml",
   "java/res/drawable/ic_toggle_up.xml",
@@ -713,6 +715,7 @@ brave_java_resources = [
   "java/res/layout/activity_add_account.xml",
 
   "java/res/layout/activity_crypto_wallet.xml",
+  "java/res/layout/brave_news_settings_bar_layout.xml",
   "java/res/layout/brave_news_row.xml",
 
   "java/res/layout/activity_asset_detail.xml",
@@ -862,6 +865,9 @@ brave_java_resources = [
   "java/res/xml/brave_rewards_preferences.xml",
   "java/res/xml/brave_search_engines_preferences.xml",
   "java/res/xml/brave_stats_preferences.xml",
+  "java/res/xml/brave_news_preferences.xml",
+  "java/res/xml/brave_news_sources.xml",
+  "java/res/layout/pref_edittext_dialog.xml",
   "java/res/xml/brave_theme_preferences.xml",
   "java/res/xml/brave_webrtc_policy_preferences.xml",
   "java/res/xml/clear_browsing_data_preferences_tab.xml",

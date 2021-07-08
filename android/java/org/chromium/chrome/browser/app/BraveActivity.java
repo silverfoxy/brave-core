@@ -23,13 +23,16 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
+import android.widget.ScrollView;
+import android.graphics.Bitmap;
 import androidx.annotation.NonNull;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentManager;
+import android.widget.FrameLayout;
 import androidx.fragment.app.FragmentTransaction;
 
 import org.json.JSONException;
+import android.graphics.drawable.BitmapDrawable;
 
 import org.chromium.base.ApplicationStatus;
 import org.chromium.base.BraveReflectionUtil;
@@ -112,6 +115,8 @@ import org.chromium.components.embedder_support.util.UrlUtilities;
 import org.chromium.components.search_engines.TemplateUrl;
 import org.chromium.components.user_prefs.UserPrefs;
 import org.chromium.ui.widget.Toast;
+import org.chromium.chrome.browser.compositor.CompositorViewHolder;
+import org.chromium.chrome.browser.ntp_background_images.util.NewTabPageListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -177,6 +182,8 @@ public abstract class BraveActivity<C extends ChromeActivityComponent>
         super.onResumeWithNative();
         BraveActivityJni.get().restartStatsUpdater();
     }
+
+    private NewTabPageListener newTabPageListener;
 
     @Override
     public boolean onMenuOrKeyboardAction(int id, boolean fromMenu) {
@@ -425,6 +432,58 @@ public abstract class BraveActivity<C extends ChromeActivityComponent>
         }
         checkSetDefaultBrowserModal();
         checkFingerPrintingOnUpgrade();
+
+        if (UrlUtilities.isNTPUrl(getActivityTab().getUrlString())){
+            Log.d("BN", "is NTP ");
+            inflateNewsSettingsBar();
+        }
+
+        Log.d("BN", "lifecycle BraveActivity finishNativeInitialization");
+        
+    }
+
+    private void inflateNewsSettingsBar() {
+        // get the main compositor view that we'll use to manipulate the views
+        CompositorViewHolder compositorView =  findViewById(R.id.compositor_view_holder);
+        ViewGroup controlContainer =  findViewById(R.id.control_container);
+        Log.d("bn", "controlContainer: "+ controlContainer);
+        Log.d("bn", "controlContainer: "+ controlContainer.getBottom());
+        int[] coords = {0,0};
+        controlContainer.getLocationOnScreen(coords);
+        int absoluteTop = coords[1];
+        int absoluteBottom = coords[1] + controlContainer.getHeight();
+        Log.d("bn", "controlContainer absoluteBottom: "+ absoluteBottom);
+        Log.d("bn", "controlContainer controlContainer.getHeight(): "+ controlContainer.getHeight());
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        //inflate the settings bar layout
+        View inflatedLayout= inflater.inflate(R.layout.brave_news_settings_bar_layout, null);
+        // add the bar to the layout stack
+        compositorView.addView(inflatedLayout, 2);
+        FrameLayout.LayoutParams inflatedLayoutParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, 100);
+        //position bellow the control_container element (nevigation bar) with 15dp compensation
+        inflatedLayoutParams.setMargins(0, controlContainer.getBottom() - 25, 0, 0);
+        inflatedLayout.setLayoutParams(inflatedLayoutParams);
+
+        compositorView.invalidate();
+    }
+
+
+    public void setBackground(Bitmap bgWallpaper) {
+        CompositorViewHolder compositorView =  findViewById(R.id.compositor_view_holder);
+        // compositorView.setBackgroundResource(R.drawable.img2);
+
+        ViewGroup root = (ViewGroup) compositorView.getChildAt(1);
+        ScrollView scrollView = (ScrollView) root.getChildAt(0);
+        scrollView.setId(View.generateViewId());
+
+        Log.d("BN", "compositor child at 0:"+compositorView.getChildAt(0));
+        Log.d("BN", "compositor child at 1:"+compositorView.getChildAt(1));
+        Log.d("BN", "compositor child at 1 scrollView :"+root.getChildAt(0));
+        Log.d("BN", "compositor child at  1 firtst id :"+scrollView.getId());
+
+        scrollView.setBackground(new BitmapDrawable(bgWallpaper));
     }
 
     private void checkFingerPrintingOnUpgrade() {

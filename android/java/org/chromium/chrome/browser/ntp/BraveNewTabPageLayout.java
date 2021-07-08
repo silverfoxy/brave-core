@@ -19,7 +19,9 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import androidx.core.view.ViewCompat;
-
+import android.util.DisplayMetrics;
+import androidx.annotation.NonNull;
+import org.chromium.chrome.browser.compositor.CompositorViewHolder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -45,11 +47,17 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.core.widget.NestedScrollView;
+import android.widget.ScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.os.Looper;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
+import org.chromium.components.browser_ui.settings.SettingsLauncher;
+import org.chromium.chrome.browser.settings.SettingsLauncherImpl;
+import org.chromium.chrome.browser.sync.settings.BraveManageSyncSettings;
+import org.chromium.chrome.browser.settings.BraveNewsPreferences;
+
 import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -145,6 +153,9 @@ public class BraveNewTabPageLayout
 
     private ImageView bgImageView;
     private Profile mProfile;
+    private BraveNewTabPageLayout ntpLayout;
+    private BraveNewTabPageLayout ntpContent;
+    private LinearLayout parentLayout;
 
     private SponsoredTab sponsoredTab;
 
@@ -180,19 +191,24 @@ public class BraveNewTabPageLayout
 
     // Brave news
     private BraveNewsAdapter adapter;
-    private Button optinButton;
+    private FrameLayout optinButton;
+    private TextView optinText;
     private LinearLayout optinLayout;
     private CopyOnWriteArrayList<NewsItem> newsItems = new CopyOnWriteArrayList<NewsItem>();
-    // private RecyclerViewReadyCallback recyclerViewReadyCallback;
     private LinearLayout container;
     private RecyclerView recyclerView;
     private NestedScrollView nestedScrollView;
     private TextView loading;
     private View loadingView;
+    private ScrollView parentScrollView ;
+    private ViewGroup imageCreditLayout ;
+    private ViewGroup settingsBar ;
+    private boolean isScrolled = false;
+    private NTPImage ntpImageGlobal;
+    private boolean settingsBarIsVisible;
 
-    // public interface RecyclerViewReadyCallback {
-    //     void onLayoutReady();
-    // }
+    private int[] location = new int[2];
+
     public BraveNewTabPageLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
         mProfile = Profile.getLastUsedRegularProfile();
@@ -459,13 +475,11 @@ public class BraveNewTabPageLayout
                     R.dimen.tile_grid_layout_vertical_spacing);
         }
         mSiteSectionView.setLayoutParams(layoutParams);
-
-        
-
     }
 
     @Override
     protected void onAttachedToWindow() {
+        Log.d("BN", "lifecycle onAttachedToWindow");
         super.onAttachedToWindow();
         if (sponsoredTab == null) {
             initilizeSponsoredTab();
@@ -494,8 +508,7 @@ public class BraveNewTabPageLayout
         }
         mBinanceNativeWorker.AddObserver(mBinanaceObserver);
         startTimer();
-initNews();
-
+        initNews();
     }
 
     @Override
@@ -519,10 +532,12 @@ initNews();
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
+        Log.d("BN", "onConfigurationChanged");
         if (sponsoredTab != null && NTPUtil.shouldEnableNTPFeature()) {
             if (bgImageView != null) {
+                Log.d("BN", "onConfigurationChanged bgimage set");
                 // We need to redraw image to fit parent properly
-                bgImageView.setImageResource(android.R.color.transparent);
+                // bgImageView.setImageResource(android.R.color.transparent);
             }
             NTPImage ntpImage = sponsoredTab.getTabNTPImage(false);
             if (ntpImage == null) {
@@ -542,64 +557,209 @@ initNews();
     }
 
     private void initNews() {
-        Log.d("test", "in initNews");
+        Log.d("bravenews", "in initNews");
+        settingsBarIsVisible = false;
         recyclerView = findViewById(R.id.newsRecycler);
         container = (LinearLayout) findViewById(R.id.ntp_main_layout);
-        nestedScrollView = findViewById(R.id.nestedScrollView);
+        // nestedScrollView = findViewById(R.id.nestedScrollView);
         optinButton = findViewById(R.id.optin_button);
         optinLayout = findViewById(R.id.optin_layout_id);
+        optinText = findViewById(R.id.optin_button_text);
         loading = findViewById(R.id.loading);
-        loadingView = findViewById(R.id.loading_spinner);
+        loadingView = findViewById(R.id.optin_loading_spinner);
+        parentLayout = (LinearLayout) findViewById(R.id.parent_layout);
+        ntpContent = (BraveNewTabPageLayout) findViewById(R.id.ntp_content);
+
 
         recyclerView.setItemViewCacheSize(20);
+        // recyclerView.setHasFixedSize(true);
         recyclerView.setDrawingCacheEnabled(true);
         recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
 
         recyclerView.setVisibility(View.GONE);
+        // recyclerView.setScrollContainer(false);
+
         recyclerView.setLayoutManager(new LinearLayoutManager(mActivity));
-        ViewCompat.setNestedScrollingEnabled(recyclerView, true);
 
         adapter = new BraveNewsAdapter(mActivity, newsItems);
         recyclerView.setAdapter(adapter);
         // adapter.setClickListener(this);
-        loadingView.setVisibility(View.GONE);
+        loadingView.setVisibility(View.GONE); 
 
-        optinButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Log.d("test", "optin click");
-                        optinLayout.setVisibility(View.GONE);
-                        loadingView.setVisibility(View.VISIBLE);
+        parentScrollView = (ScrollView) ntpContent.getParent();
+        ViewGroup rootView = (ViewGroup) parentScrollView.getParent();
+        CompositorViewHolder compositorView = (CompositorViewHolder) rootView.getParent();
 
-                        new Thread( new Runnable() { @Override public void run() {
-                            Log.d("test", "getting feed...");
-                            getFeed();
-                            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.d("test", "optin click after");
+        imageCreditLayout = findViewById(R.id.image_credit_layout);
+         
 
-                                    loadingView.setVisibility(View.GONE);
+        ViewTreeObserver parentScrollViewObserver = parentScrollView.getViewTreeObserver();
+        parentScrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged() {
+                int scrollY = parentScrollView.getScrollY(); 
 
-                                    container.setVisibility(View.VISIBLE);
-                                    recyclerView.setVisibility(View.VISIBLE);
-                                    // nestedScrollView.setVisibility(View.VISIBLE);
-                                    // preferences.setOptIn(true);
-                                    adapter.notifyDataSetChanged();
-                                }
-                            }, 1000);
+                if (recyclerView.getLayoutManager().findViewByPosition(0) != null) {
+                    if (isScrolled) {
 
-                        } } ).start();
-
+                        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+                        float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
+                    
+                        recyclerView.getLayoutManager().findViewByPosition(1).getLocationOnScreen(location);
+                        LinearLayout.LayoutParams linearLayoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                     
+                         if (ntpImageGlobal instanceof BackgroundImage) {
+                            linearLayoutParams.setMargins(0, (int) (dpHeight + 200), 0, 0);
+                         } else {
+                            linearLayoutParams.setMargins(0, (int) (dpHeight - 200), 0, 0);
+                         }
+             
+                        imageCreditLayout.setLayoutParams(linearLayoutParams);
 
                     }
+                }
+
+                isScrolled = false;
+
+                float onScrollChangedValue = parentScrollView.getMaxScrollAmount();
+                // Log.d("BN", "onScrollChangedValue view.scrollY():" + scrollY);
+                // Log.d("BN", "onScrollChangedValue view.getMaxScrollAmount():" + onScrollChangedValue);
+                float value = (float) scrollY / parentScrollView.getMaxScrollAmount();
+                if (value >= 1) {
+                    value = 1;
+                }
+                float alpha = (float) (1 - value);
+                if (alpha < 1f) {
+                    imageCreditLayout.setAlpha(alpha);
+                }
+
+                Log.d("bn", "parentScrollViewObserver is alive:"+parentScrollViewObserver.isAlive());
+                if (settingsBar != null){
+                    if (value > 0.4 && settingsBar.getAlpha() <= 1f){
+                        settingsBar.setAlpha((float) (value + 0.5));
+                    } else if (value < 0.4 && settingsBar.getAlpha() > 0f){
+                        settingsBar.setAlpha((float) (value - 0.2));
+                    }
+                    if (settingsBar.getAlpha() >= 1 ) {
+                        settingsBarIsVisible = true;
+                    } else {
+                        settingsBarIsVisible = false;
+                    }
+                    Log.d("BN", "settings bar alpha: "+settingsBar.getAlpha() + "isVisible:"+settingsBarIsVisible);
+                }
+            }
+        });
+
+
+        
+
+        parentScrollViewObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                Log.d("BN", "settings bar on onGlobalLayout: "+settingsBar);
+                if (settingsBar != null){
+                    Log.d("BN", "settings bar on onGlobalLayout: "+settingsBar.getAlpha());
+                        settingsBar.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Log.d("bn", "clicked on settings bar 1:" +settingsBar.getAlpha()+" isVisible:"+settingsBarIsVisible);
+                            }
+                        });
+                    ImageView newsSettingsButton = (ImageView) settingsBar.findViewById(R.id.news_settings_button);
+                    ViewTreeObserver.OnGlobalLayoutListener listener = this;
+                    Log.d("bn", "parentScrollViewObserver is alive before:"+parentScrollViewObserver.isAlive());
+                    
+                    newsSettingsButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (settingsBarIsVisible) {
+                                SettingsLauncher settingsLauncher = new SettingsLauncherImpl();
+                                settingsLauncher.launchSettingsActivity(getContext(), BraveNewsPreferences.class);
+                                parentScrollView.getViewTreeObserver().removeOnGlobalLayoutListener(listener);
+                            }
+                        }
+                    });
+                    Log.d("bn", "parentScrollViewObserver is alive after:"+parentScrollViewObserver.isAlive());
+                    // }
+                } else {
+                    Log.d("BN", "settings bar on onGlobalLayout is null: "+settingsBar);
+                }
+            }
+        });
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                int offset = recyclerView.computeVerticalScrollOffset();
+
+                Log.d("BN", "onScrollStateChanged:" + newState + " offset:" + offset);
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                int offset = recyclerView.computeVerticalScrollOffset();
+                Log.d("BN", "onScrolled dx:" + dx + " dy:" + dy + " offset:" + offset);
+                parentScrollView.post(new Runnable() {
+                    public void run() {
+                        Log.d("BN", "onScrolled scroll to:" + offset + " positionL:" + parentScrollView.getVerticalScrollbarPosition());
+
+                        parentScrollView.scrollBy(0, offset + 50);
+                    }
                 });
+            }
+        });
+
+        optinButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("BN", "optin click");
+
+                loadingView.setVisibility(View.VISIBLE);
+                optinButton.setClickable(false);
+                optinText.setVisibility(View.INVISIBLE);
+                loadingView.setVisibility(View.VISIBLE);
+                new Thread( new Runnable() { @Override public void run() {
+                    Log.d("bravenews", "getting feed...");
+                    getFeed();
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.d("BN", "optin click after");
+
+                            loadingView.setVisibility(View.GONE);
+                            optinLayout.setVisibility(View.GONE);
+
+                            container.setVisibility(View.VISIBLE);
+                            recyclerView.setVisibility(View.VISIBLE);
+
+                            // nestedScrollView.setVisibility(View.VISIBLE);
+                            // preferences.setOptIn(true);
+
+                            adapter.notifyDataSetChanged();
+
+                            parentScrollView.scrollTo(0, 0);
+                            // parentScrollView.fullScroll(ScrollView.FOCUS_UP);
+
+                            isScrolled = true;
+                            Log.d("BN", "optin click after recycler y0:"+recyclerView.getY());
+
+                            if (recyclerView.getLayoutManager().findViewByPosition(0) != null) {
+                                Log.d("BN", "optin click after y0:"+recyclerView.getLayoutManager().findViewByPosition(0).getY());
+
+                            }
+                        }
+                    }, 1000);
+                } } ).start();
+            }
+        });
     }
 
     private void getFeed() {
         BraveNewsUtils utils = new BraveNewsUtils(mActivity);
         newsItems = utils.parseJson(newsItems);
-        Log.d("test", "end parse");
+        Log.d("bravenews", "end parse");
     }
 
     @Override
@@ -616,6 +776,8 @@ initNews();
         assert (activity instanceof BraveActivity);
         mActivity = activity;
         ((BraveActivity) mActivity).dismissShieldsTooltip();
+             CompositorViewHolder compositorView =  findViewById(R.id.compositor_view_holder);
+        Log.d("BN", "lifecycle init compositorview:"+compositorView);
          
     }
 
@@ -627,9 +789,13 @@ initNews();
         ImageView mSponsoredLogo = (ImageView) findViewById(R.id.sponsored_logo);
         FloatingActionButton mSuperReferralLogo = (FloatingActionButton) findViewById(R.id.super_referral_logo);
         TextView mCreditText = (TextView) findViewById(R.id.credit_text);
+        LinearLayout optinLayout = (LinearLayout) findViewById(R.id.optin_layout_id);
+        ntpImageGlobal = ntpImage;
         if (ntpImage instanceof Wallpaper
                 && NTPUtil.isReferralEnabled()
                 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Log.d("BN", "bgimage if");
+            Log.d("bn", "bgimagestep 0");
             setBackgroundImage(ntpImage);
             mSuperReferralLogo.setVisibility(View.VISIBLE);
             mCreditText.setVisibility(View.GONE);
@@ -657,12 +823,16 @@ initNews();
                        BravePref.NEW_TAB_PAGE_SHOW_BACKGROUND_IMAGE)
                    && sponsoredTab != null
                    && NTPUtil.shouldEnableNTPFeature()) {
+            Log.d("BN", "bgimage else if");
             setBackgroundImage(ntpImage);
+            optinLayout.setVisibility(View.VISIBLE);
             if (ntpImage instanceof BackgroundImage) {
                 BackgroundImage backgroundImage = (BackgroundImage) ntpImage;
                 mSponsoredLogo.setVisibility(View.GONE);
                 mSuperReferralLogo.setVisibility(View.GONE);
+
                 if (backgroundImage.getImageCredit() != null) {
+                    Log.d("bn", "bgimagestep 1");
                     String imageCreditStr = String.format(getResources().getString(R.string.photo_by, backgroundImage.getImageCredit().getName()));
 
                     SpannableStringBuilder spannableString = new SpannableStringBuilder(imageCreditStr);
@@ -674,6 +844,7 @@ initNews();
 
                     mCreditText.setText(spannableString);
                     mCreditText.setVisibility(View.VISIBLE);
+                    
                     mCreditText.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -683,20 +854,28 @@ initNews();
                             }
                         }
                     });
+                } else {
+                    Log.d("bn", "bgimagestep 2");
                 }
+            } else {
+               Log.d("bn", "bgimagestep 3"); 
             }
+        } else {
+            Log.d("BN", "bgimage else");
         }
     }
 
     private void setBackgroundImage(NTPImage ntpImage) {
         bgImageView = (ImageView) findViewById(R.id.bg_image_view);
-        bgImageView.setScaleType(ImageView.ScaleType.MATRIX);
+        // ntpLayout = (BraveNewTabPageLayout) findViewById(R.id.ntp_content);
+        // bgImageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        Log.d("BN", "setting bgImageView:" + ntpImage);
 
         ViewTreeObserver observer = bgImageView.getViewTreeObserver();
         observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                mWorkerTask = new FetchWallpaperWorkerTask(ntpImage, bgImageView.getMeasuredWidth(), bgImageView.getMeasuredHeight(), wallpaperRetrievedCallback);
+                mWorkerTask = new FetchWallpaperWorkerTask(ntpImage, bgImageView.getMeasuredWidth(),  bgImageView.getMeasuredHeight(), wallpaperRetrievedCallback);
                 mWorkerTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
                 bgImageView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
@@ -719,9 +898,13 @@ initNews();
 
     private void checkAndShowNTPImage(boolean isReset) {
         NTPImage ntpImage = sponsoredTab.getTabNTPImage(isReset);
+        Log.d("BN", "checking NTP");
         if (ntpImage == null) {
+                    Log.d("BN", "ntpImage null setting 1");
             sponsoredTab.setNTPImage(SponsoredImageUtil.getBackgroundImage());
         } else if (ntpImage instanceof Wallpaper) {
+            Log.d("BN", "ntpImage not null setting 2");
+
             Wallpaper mWallpaper = (Wallpaper) ntpImage;
             if (mWallpaper == null) {
                 sponsoredTab.setNTPImage(SponsoredImageUtil.getBackgroundImage());
@@ -752,6 +935,21 @@ initNews();
                 initilizeSponsoredTab();
             }
             checkAndShowNTPImage(false);
+ 
+            Log.d("bn", "updateNTPImage");
+            parentScrollView = (ScrollView) ntpContent.getParent();
+            Log.d("bn", "rootView:" + parentScrollView);
+            ViewGroup rootView = (ViewGroup) parentScrollView.getParent();
+            Log.d("bn", "rootView:" + rootView);
+            CompositorViewHolder compositorView = (CompositorViewHolder) rootView.getParent();
+            Log.d("bn", "compositorView:" + compositorView);
+
+            final int childCount = compositorView.getChildCount();
+            Log.d("bn", "childCount:" + childCount);
+            for (int i = 0; i < childCount; i++) {
+                  View v = compositorView.getChildAt(i);
+                  Log.d("bn", "child view :" + v);
+            }
             
         }
 
@@ -787,14 +985,33 @@ initNews();
                     mNTPBackgroundImagesBridge.getTopSites();
                 }
             }
-        }
+        } 
     };
 
     private FetchWallpaperWorkerTask.WallpaperRetrievedCallback wallpaperRetrievedCallback = new FetchWallpaperWorkerTask.WallpaperRetrievedCallback() {
         @Override
         public void bgWallpaperRetrieved(Bitmap bgWallpaper) {
-            bgImageView.setImageBitmap(bgWallpaper);
+            Log.d("BN", "setting wallpaper:"+bgWallpaper);
+            if (BraveActivity.getBraveActivity() != null) {
+                BraveActivity.getBraveActivity().setBackground(bgWallpaper);
+            }
+
+            parentScrollView = (ScrollView) ntpContent.getParent();
+            Log.d("bn", "rootView:" + parentScrollView);
+            ViewGroup rootView = (ViewGroup) parentScrollView.getParent();
+            Log.d("bn", "rootView:" + rootView);
+            CompositorViewHolder compositorView = (CompositorViewHolder) rootView.getParent();
+            Log.d("bn", "compositorView:" + compositorView);
+
+            final int childCount = compositorView.getChildCount();
+            Log.d("bn", "childCount:" + childCount);
+            // @TODO type check and null checks for all views added by getChild or similar
+            settingsBar = (LinearLayout) compositorView.getChildAt(2);
+            settingsBar.setAlpha(0);
+
         }
+            // bgImageView.setImageBitmap(bgWallpaper);
+        
 
         @Override
         public void logoRetrieved(Wallpaper mWallpaper, Bitmap logoWallpaper) {
@@ -1098,16 +1315,16 @@ initNews();
 
     @Override
     public void onCloseClick(View view) {
-        Log.d("Test", "close click");
+        Log.d("bravenews", "close click");
     }
     
     @Override
     public void onOptInClick(View view) {
-        Log.d("Test", "optin click");
+        Log.d("bravenews", "optin click");
     }
 
     @Override
     public void onItemClick(View view, int position) {
-        Log.d("test", "You clicked " + adapter.getItem(position) + " on row number " + position);
+        Log.d("bravenews", "You clicked " + adapter.getItem(position) + " on row number " + position);
     }    
 }

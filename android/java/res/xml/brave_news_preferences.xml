@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--* Copyright (c) 2021 The Brave Authors. All rights reserved.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
+
+    <org.chromium.components.browser_ui.settings.ChromeSwitchPreference
+        android:key="turn_on_news"
+        android:title="@string/news_turn_on_button"
+        android:summaryOff="@string/news_turn_on_text" />
+
+    <org.chromium.components.browser_ui.settings.ChromeSwitchPreference
+        android:key="show_news"
+        android:title="@string/news_show"
+        android:dependency="turn_on_news"
+        android:summaryOn="@string/news_turn_on_text"
+        android:summaryOff="@string/news_turn_on_text" />
+
+    <PreferenceCategory
+        android:key="your_sources_section"
+        android:dependency="show_news"
+        android:title="@string/news_your_sources_section"/>
+
+   <org.chromium.components.browser_ui.settings.ChromeBasePreference
+        android:fragment="org.chromium.chrome.browser.settings.BraveAddNewsSources"
+        android:key="add_source_news"
+        android:id="@android:id/edit"
+        android:persistent="false"
+        android:dependency="show_news"
+        android:summary="@string/news_add_source"
+        android:title="@string/news_add_source"/>
+
+</androidx.preference.PreferenceScreen>
