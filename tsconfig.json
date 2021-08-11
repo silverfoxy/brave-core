@@ -23,12 +23,37 @@
     "baseUrl": ".",
     "paths": {
       "brave-ui": ["node_modules/brave-ui/src"],
-      "brave-ui/*": ["node_modules/brave-ui/src/*"]
+      "brave-ui/*": ["node_modules/brave-ui/src/*"],
+      "gen/*": [
+        // This list of paths in the format [configuration]/gen is not used at compile-time
+        // since we don't want results from 1 compilation to affect another.
+        // However, we specify them all here for developer design / coding time
+        // intellisense support. They get overriden at compile-time in
+        // webpack.config.js.
+        "../out/Component/gen/*",
+        "../out/Static/gen/*",
+        "../out/Release/gen/*",
+        "../out/Debug/gen/*",
+      ]
+      // "chrome://resources/mojo/*": ["../out/Component/gen/*"],
+      // "chrome://resources/*": ["../out/Component/gen/ui/webui/resources/preprocessed/*"]
     },
     "typeRoots": [
       "./node_modules/@types",
       "./components/definitions"
     ],
+    // "rootDirs": [
+    //   "..",
+    //   // This list of [configuration]/gen is not used at compile-time
+    //   // since we don't want results from 1 compilation to affect another.
+    //   // However, we specify them all here for developer design / coding time
+    //   // intellisense support. They get overriden at compile-time in
+    //   // webpack.config.js.
+    //   "../out/Component/gen",
+    //   "../out/Static/gen",
+    //   "../out/Release/gen",
+    //   "../out/Debug/gen",
+    // ],
     // optional
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,

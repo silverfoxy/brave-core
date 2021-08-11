@@ -17,6 +17,7 @@ module.exports = (env, argv) => ({
   resolve: {
     extensions: ['.js', '.tsx', '.ts', '.json'],
     alias: {
+      'gen': process.env.ROOT_GEN_DIR,
       'chrome://resources/mojo': process.env.ROOT_GEN_DIR,
       'chrome://resources/js': path.resolve(path.join(process.env.ROOT_GEN_DIR, './ui/webui/resources/preprocessed/js')),
       'brave-ui': path.resolve(__dirname, '../../node_modules/brave-ui/src'),
@@ -47,6 +48,7 @@ module.exports = (env, argv) => ({
         options: {
           getCustomTransformers: path.join(__dirname, './webpack-ts-transformers.js'),
           allowTsInNodeModules: true,
+          // TODO: generate in gen/ directory with baseUrl back to src/brave
           configFile: 'tsconfig-webpack.json'
         }
       },
