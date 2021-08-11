@@ -1,0 +1,109 @@
+module brave_news.mojom;
+
+import "mojo/public/mojom/base/time.mojom";
+import "url/mojom/url.mojom";
+
+
+// Items either have a padded or an unpadded image url
+union Image {
+  url.mojom.Url padding_image_url;
+  url.mojom.Url image_url;
+};
+
+struct FeedItemMetadata {
+  string category_name;
+  mojo_base.mojom.Time publish_time;
+  string title;
+  string description;
+  url.mojom.Url url;
+  string url_hash;
+  Image image;
+  string publisher_id;
+  string publisher_name;
+  int32 score;
+  string relative_time_description;
+};
+
+struct Article {
+  FeedItemMetadata data;
+};
+
+struct PromotedArticle {
+  FeedItemMetadata data;
+  string creative_instance_id;
+};
+
+struct Deal {
+  FeedItemMetadata data;
+  string offers_category;
+};
+
+union FeedItem {
+  Article article;
+  PromotedArticle promoted_article;
+  Deal deal;
+};
+
+struct CategoryArticles {
+  string category_name;
+  array<Article, 3> articles;
+};
+
+struct PublisherArticles {
+  string publisher_name;
+  array<Article, 3> articles;
+};
+
+struct Page {
+  array<Article> articles;  // Up to 15
+  array<Article, 3> random_articles; // Up to 3
+  CategoryArticles? items_by_category;
+  PublisherArticles? items_by_publisher;
+  array<Deal>? deals; // Up to 3
+  PromotedArticle? promoted_article;
+};
+
+struct Feed {
+  string hash;
+  array<Page> pages;
+  Article? featured_article;
+};
+
+struct DisplayAd {
+  string uuid;
+  string creative_instance_id;
+  string dimensions;
+  string title;
+  string description;
+  Image image;
+  url.mojom.Url target_url;
+  string? cta_text;
+};
+
+enum UserEnabled {
+  NOT_MODIFIED,
+  ENABLED,
+  DISABLED,
+};
+
+struct Publisher {
+  // Identifies whether the user has manually set the publisher on and off,
+  // so that we may know if the source should follow the remote-provided value
+  // (which may change), or not.
+  string publisher_id;
+  string publisher_name;
+  string category_name;
+  bool is_enabled;
+  UserEnabled user_enabled_status = UserEnabled.NOT_MODIFIED;
+};
+
+
+// Browser-side handler
+interface BraveNewsController {
+  GetFeed() => (Feed feed);
+  GetPublishers() => (map<string, Publisher> publishers);
+  GetImageData(url.mojom.Url padded_image_url) => (string data_url);
+  SetPublisherPref(string publisher_id, UserEnabled new_status);
+  ClearPrefs() => (map<string, Publisher> publishers);
+  IsFeedUpdateAvailable(string displayed_feed_hash) => (bool is_update_available);
+};
