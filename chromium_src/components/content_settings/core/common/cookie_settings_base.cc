@@ -85,15 +85,6 @@ bool IsFirstPartyAccessAllowed(
 
 }  // namespace
 
-ScopedEphemeralStorageAwareness::ScopedEphemeralStorageAwareness(
-    bool* ephemeral_storage_aware)
-    : ephemeral_storage_aware_auto_reset_(ephemeral_storage_aware, true) {}
-ScopedEphemeralStorageAwareness::~ScopedEphemeralStorageAwareness() = default;
-ScopedEphemeralStorageAwareness::ScopedEphemeralStorageAwareness(
-    ScopedEphemeralStorageAwareness&& rhs) = default;
-ScopedEphemeralStorageAwareness& ScopedEphemeralStorageAwareness::operator=(
-    ScopedEphemeralStorageAwareness&& rhs) = default;
-
 bool CookieSettingsBase::ShouldUseEphemeralStorage(
     const GURL& url,
     const GURL& site_for_cookies,
@@ -128,7 +119,7 @@ bool CookieSettingsBase::ShouldUseEphemeralStorage(
 
 ScopedEphemeralStorageAwareness
 CookieSettingsBase::CreateScopedEphemeralStorageAwareness() const {
-  return ScopedEphemeralStorageAwareness(&ephemeral_storage_aware_);
+  return ScopedEphemeralStorageAwareness(&ephemeral_storage_aware_, true);
 }
 
 bool CookieSettingsBase::IsEphemeralCookieAccessAllowed(
@@ -181,8 +172,9 @@ bool CookieSettingsBase::IsCookieAccessAllowedImpl(
   const bool is_1p_ephemeral =
       is_1p_ephemeral_feature_enabled && IsCookieSessionOnly(first_party_url);
 
-  if (is_1p_ephemeral && allow)
+  if (is_1p_ephemeral && allow) {
     return false;
+  }
 
   if (!IsFirstPartyAccessAllowed(first_party_url, this))
     return false;
