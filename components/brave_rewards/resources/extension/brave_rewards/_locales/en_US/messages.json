@@ -616,11 +616,15 @@
     "description": ""
   },
   "braveTalkWantLearnMore": {
-    "message": "Want to learn more about Brave Rewards?",
-    "description": ""
-  },
-  "braveTalkRewardsTour": {
-    "message": "Take a quick tour.",
-    "description": ""
+    "message": "Want to learn more about Brave Rewards? $tour_link_begin$Take a quick tour$tour_link_end$.",
+    "description": "",
+    "placeholders": {
+      "tour_link_begin": {
+        "content": "$1"
+      },
+      "tour_link_end": {
+        "content": "$2"
+      }
+    }
   }
 }

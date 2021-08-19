@@ -57,6 +57,5 @@ export const localeStrings = {
   braveTalkTurnOnPrivateAds: 'Turn on Brave Private Ads',
   braveTalkCanStartFreeCall: 'You can now start a free call',
   braveTalkClickAnywhereToBraveTalk: 'Click anywhere on the screen to continue to Brave Talk.',
-  braveTalkWantLearnMore: 'Want to learn more about Brave Rewards?',
-  braveTalkRewardsTour: 'Take a quick tour.'
+  braveTalkWantLearnMore: 'Want to learn more about Brave Rewards?$1Take a quick tour$2.'
 }
