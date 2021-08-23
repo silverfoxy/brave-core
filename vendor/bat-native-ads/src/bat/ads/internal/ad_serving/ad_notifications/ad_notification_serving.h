@@ -8,9 +8,12 @@
 
 #include <memory>
 
-#include "base/time/time.h"
 #include "bat/ads/internal/ad_serving/ad_notifications/ad_notification_serving_observer.h"
 #include "bat/ads/internal/timer.h"
+
+namespace base {
+class Time;
+}
 
 namespace ads {
 
@@ -45,6 +48,8 @@ class AdServing {
   void StopServingAdsAtRegularIntervals();
 
   void MaybeServeAd();
+  void MaybeServeAdV1();
+  void MaybeServeAdV2();
 
   void OnAdsPerHourChanged();
 

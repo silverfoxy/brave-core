@@ -13,15 +13,14 @@
 #include <utility>
 #include <vector>
 
-#include "base/files/file_path.h"
 #include "base/files/scoped_temp_dir.h"
-#include "base/time/time.h"
-#include "bat/ads/database.h"
 #include "bat/ads/internal/platform/platform_helper_mock.h"
 #include "bat/ads/public/interfaces/ads.mojom.h"
-#include "brave/components/l10n/browser/locale_helper_mock.h"
 #include "testing/gtest/include/gtest/gtest.h"
-#include "third_party/abseil-cpp/absl/types/optional.h"
+
+namespace brave_l10n {
+class LocaleHelperMock;
+}  // namespace brave_l10n
 
 namespace ads {
 
@@ -76,16 +75,7 @@ using URLEndpointResponses = std::vector<URLEndpointResponse>;
 using URLEndpoints = std::map<std::string, URLEndpointResponses>;
 
 class AdsClientMock;
-
-base::FilePath GetTestPath();
-
-absl::optional<std::string> ReadFileFromTestPathToString(
-    const std::string& name);
-
-base::FilePath GetResourcesPath();
-
-absl::optional<std::string> ReadFileFromResourcePathToString(
-    const std::string& name);
+class Database;
 
 void SetEnvironment(const mojom::Environment environment);
 
@@ -135,21 +125,6 @@ void MockRunDBTransaction(const std::unique_ptr<AdsClientMock>& mock,
                           const std::unique_ptr<Database>& database);
 
 void MockPrefs(const std::unique_ptr<AdsClientMock>& mock);
-
-int64_t TimestampFromDateString(const std::string& date);
-base::Time TimeFromDateString(const std::string& date);
-
-int64_t DistantPastAsTimestamp();
-base::Time DistantPast();
-std::string DistantPastAsISO8601();
-
-int64_t NowAsTimestamp();
-base::Time Now();
-std::string NowAsISO8601();
-
-int64_t DistantFutureAsTimestamp();
-base::Time DistantFuture();
-std::string DistantFutureAsISO8601();
 
 }  // namespace ads
 

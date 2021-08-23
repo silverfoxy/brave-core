@@ -17,6 +17,9 @@
 #include "bat/ads/internal/database/tables/ad_events_database_table.h"
 #include "bat/ads/internal/database/tables/creative_inline_content_ads_database_table.h"
 #include "bat/ads/internal/eligible_ads/eligible_ads_constants.h"
+#include "bat/ads/internal/eligible_ads/eligible_ads_predictor_util.h"
+#include "bat/ads/internal/eligible_ads/eligible_ads_util.h"
+#include "bat/ads/internal/eligible_ads/sample_ads.h"
 #include "bat/ads/internal/eligible_ads/seen_ads.h"
 #include "bat/ads/internal/eligible_ads/seen_advertisers.h"
 #include "bat/ads/internal/features/ad_serving/ad_serving_features.h"
@@ -52,7 +55,7 @@ void EligibleAds::SetLastServedAd(const CreativeAdInfo& creative_ad) {
 
 void EligibleAds::Get(const ad_targeting::UserModelInfo& user_model,
                       const std::string& dimensions,
-                      GetEligibleAdsCallback callback) {
+                      GetCallback callback) {
   database::table::AdEvents database_table;
   database_table.GetAll([=](const bool success, const AdEventList& ad_events) {
     if (!success) {
@@ -71,14 +74,91 @@ void EligibleAds::Get(const ad_targeting::UserModelInfo& user_model,
   });
 }
 
+void EligibleAds::GetV2(const ad_targeting::UserModelInfo& user_model,
+                        const std::string& dimensions,
+                        GetV2Callback callback) {
+  database::table::AdEvents database_table;
+  database_table.GetAll([=](const bool success, const AdEventList& ad_events) {
+    if (!success) {
+      BLOG(1, "Failed to get ad events");
+      callback(/* was_allowed */ false, absl::nullopt);
+      return;
+    }
+
+    const int max_count = features::GetBrowsingHistoryMaxCount();
+    const int days_ago = features::GetBrowsingHistoryDaysAgo();
+    AdsClientHelper::Get()->GetBrowsingHistory(
+        max_count, days_ago, [=](const BrowsingHistoryList& history) {
+          GetEligibleAds(user_model, ad_events, history, dimensions, callback);
+        });
+  });
+}
+
 ///////////////////////////////////////////////////////////////////////////////
+
+void EligibleAds::GetEligibleAds(const ad_targeting::UserModelInfo& user_model,
+                                 const AdEventList& ad_events,
+                                 const BrowsingHistoryList& browsing_history,
+                                 const std::string& dimensions,
+                                 GetV2Callback callback) const {
+  BLOG(1, "Get eligible ads");
+
+  database::table::CreativeInlineContentAds database_table;
+  database_table.GetForDimensions(
+      dimensions,
+      [=](const bool success, const CreativeInlineContentAdList& ads) {
+        if (!success) {
+          BLOG(1, "Failed to get inline content ads");
+          callback(/* was_allowed */ false, absl::nullopt);
+          return;
+        }
+
+        if (ads.empty()) {
+          BLOG(1, "No inline content ads");
+          callback(/* was_allowed */ true, absl::nullopt);
+          return;
+        }
+
+        CreativeInlineContentAdList eligible_ads = ApplyFrequencyCapping(
+            ads,
+            ShouldCapLastServedAd(ads) ? last_served_creative_ad_
+                                       : CreativeAdInfo(),
+            ad_events, browsing_history);
+
+        if (eligible_ads.empty()) {
+          BLOG(1, "No eligible ads");
+          callback(/* was_allowed */ true, absl::nullopt);
+          return;
+        }
+
+        ChooseAd(user_model, ad_events, eligible_ads, callback);
+      });
+}
+
+void EligibleAds::ChooseAd(const ad_targeting::UserModelInfo& user_model,
+                           const AdEventList& ad_events,
+                           const CreativeInlineContentAdList& eligible_ads,
+                           GetV2Callback callback) const {
+  DCHECK(!eligible_ads.empty());
+
+  const CreativeInlineContentAdPredictorMap ads =
+      GroupEligibleAdsByCreativeInstanceId(eligible_ads);
+
+  const CreativeInlineContentAdPredictorMap ads_with_features =
+      ComputePredictorFeaturesAndScores(ads, user_model, ad_events);
+
+  const absl::optional<CreativeInlineContentAdInfo> ad =
+      SampleFromAds(ads_with_features);
+
+  callback(/* was_allowed */ true, ad);
+}
 
 void EligibleAds::GetForParentChildSegments(
     const ad_targeting::UserModelInfo& user_model,
     const std::string& dimensions,
     const AdEventList& ad_events,
     const BrowsingHistoryList& browsing_history,
-    GetEligibleAdsCallback callback) const {
+    GetCallback callback) const {
   const SegmentList segments =
       ad_targeting::GetTopParentChildSegments(user_model);
   if (segments.empty()) {
@@ -93,7 +173,7 @@ void EligibleAds::GetForParentChildSegments(
   }
 
   database::table::CreativeInlineContentAds database_table;
-  database_table.GetForSegments(
+  database_table.GetForSegmentsAndDimensions(
       segments, dimensions,
       [=](const bool success, const SegmentList& segments,
           const CreativeInlineContentAdList& ads) {
@@ -116,7 +196,7 @@ void EligibleAds::GetForParentSegments(
     const std::string& dimensions,
     const AdEventList& ad_events,
     const BrowsingHistoryList& browsing_history,
-    GetEligibleAdsCallback callback) const {
+    GetCallback callback) const {
   const SegmentList segments = ad_targeting::GetTopParentSegments(user_model);
   if (segments.empty()) {
     GetForUntargeted(dimensions, ad_events, browsing_history, callback);
@@ -129,7 +209,7 @@ void EligibleAds::GetForParentSegments(
   }
 
   database::table::CreativeInlineContentAds database_table;
-  database_table.GetForSegments(
+  database_table.GetForSegmentsAndDimensions(
       segments, dimensions,
       [=](const bool success, const SegmentList& segments,
           const CreativeInlineContentAdList& ads) {
@@ -149,11 +229,11 @@ void EligibleAds::GetForParentSegments(
 void EligibleAds::GetForUntargeted(const std::string& dimensions,
                                    const AdEventList& ad_events,
                                    const BrowsingHistoryList& browsing_history,
-                                   GetEligibleAdsCallback callback) const {
+                                   GetCallback callback) const {
   BLOG(1, "Get eligible ads for untargeted segment");
 
   database::table::CreativeInlineContentAds database_table;
-  database_table.GetForSegments(
+  database_table.GetForSegmentsAndDimensions(
       {kUntargeted}, dimensions,
       [=](const bool success, const SegmentList& segments,
           const CreativeInlineContentAdList& ads) {

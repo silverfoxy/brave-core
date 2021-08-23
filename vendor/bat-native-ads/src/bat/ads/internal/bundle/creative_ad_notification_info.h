@@ -15,6 +15,7 @@ namespace ads {
 
 struct CreativeAdNotificationInfo : CreativeAdInfo {
   CreativeAdNotificationInfo();
+  explicit CreativeAdNotificationInfo(const CreativeAdInfo& creative_ad);
   ~CreativeAdNotificationInfo();
 
   bool operator==(const CreativeAdNotificationInfo& rhs) const;

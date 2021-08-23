@@ -43,6 +43,10 @@ class AdServing {
 
   void MaybeServeAd(const std::string& dimensions,
                     GetInlineContentAdCallback callback);
+  void MaybeServeAdV1(const std::string& dimensions,
+                      GetInlineContentAdCallback callback);
+  void MaybeServeAdV2(const std::string& dimensions,
+                      GetInlineContentAdCallback callback);
 
  private:
   ad_targeting::geographic::SubdivisionTargeting*
