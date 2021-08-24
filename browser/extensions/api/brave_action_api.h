@@ -29,6 +29,14 @@ class BraveActionAPI : public KeyedService {
     virtual ~Observer();
   };
 
+  class ActionUIObserver {
+   public:
+    virtual ~ActionUIObserver() = default;
+
+    virtual void OnActionUIClosed(Browser* browser,
+                                  const std::string& extension_id) = 0;
+  };
+
   static BraveActionAPI* Get(Browser* context);
   static bool ShowActionUI(
         ExtensionFunction* extension_function,
@@ -44,9 +52,14 @@ class BraveActionAPI : public KeyedService {
   BraveActionAPI();
   ~BraveActionAPI() override;
 
+  void NotifyActionUIClosed(Browser* browser, const std::string& extension_id);
+
   // Add or remove observers.
   void AddObserver(Observer* observer);
   void RemoveObserver(Observer* observer);
+
+  void AddActionUIObserver(ActionUIObserver* observer);
+  void RemoveActionUIObserver(ActionUIObserver* observer);
 
  protected:
   bool NotifyObservers(const std::string& extension_id,
@@ -54,6 +67,7 @@ class BraveActionAPI : public KeyedService {
 
  private:
   base::ObserverList<Observer>::Unchecked observers_;
+  base::ObserverList<ActionUIObserver>::Unchecked action_ui_observers_;
 
   DISALLOW_COPY_AND_ASSIGN(BraveActionAPI);
 };

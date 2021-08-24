@@ -148,12 +148,27 @@ BraveActionAPI::BraveActionAPI() {}
 BraveActionAPI::~BraveActionAPI() {
 }
 
+void BraveActionAPI::NotifyActionUIClosed(Browser* browser,
+                                          const std::string& extension_id) {
+  for (auto& observer : action_ui_observers_) {
+    observer.OnActionUIClosed(browser, extension_id);
+  }
+}
+
 void BraveActionAPI::AddObserver(Observer* observer) {
   observers_.AddObserver(observer);
 }
 
 void BraveActionAPI::RemoveObserver(Observer* observer) {
   observers_.RemoveObserver(observer);
+}
+
+void BraveActionAPI::AddActionUIObserver(ActionUIObserver* observer) {
+  action_ui_observers_.AddObserver(observer);
+}
+
+void BraveActionAPI::RemoveActionUIObserver(ActionUIObserver* observer) {
+  action_ui_observers_.RemoveObserver(observer);
 }
 
 bool BraveActionAPI::NotifyObservers(const std::string& extension_id,

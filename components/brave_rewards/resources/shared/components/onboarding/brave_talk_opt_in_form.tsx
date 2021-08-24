@@ -69,7 +69,7 @@ export function BraveTalkOptInForm (props: Props) {
           {getString('braveTalkPrivateAdsDescription')}
         </style.text>
         <style.enable>
-          <MainButton onClick={onRewardsTurnedOn} testId={'brave-talk-turn-on-private-ads'}>
+          <MainButton onClick={onRewardsTurnedOn}>
             {getString('braveTalkTurnOnPrivateAds')}
           </MainButton>
         </style.enable>
@@ -87,7 +87,7 @@ export function BraveTalkOptInForm (props: Props) {
         {getString('braveTalkBraveRewardsDescription')}
       </style.text>
       <style.enable>
-        <MainButton onClick={onRewardsTurnedOn} testId={'brave-talk-turn-on-rewards'}>
+        <MainButton onClick={onRewardsTurnedOn}>
           {getString('braveTalkTurnOnRewards')}
         </MainButton>
       </style.enable>

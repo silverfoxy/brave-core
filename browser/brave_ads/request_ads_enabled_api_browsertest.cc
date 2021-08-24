@@ -79,8 +79,7 @@ class RequestAdsEnabledApiTestBase : public InProcessBrowserTest {
   }
 
   content::WebContents* OpenRequestAdsEnabledPopup(
-      content::WebContents* contents,
-      const std::string& enable_button_test_id) {
+      content::WebContents* contents) {
     content::WebContents* popup_contents = nullptr;
     auto check_load_is_rewards_panel =
         [](content::WebContents** popup_contents,
@@ -108,9 +107,7 @@ class RequestAdsEnabledApiTestBase : public InProcessBrowserTest {
     // Wait for the popup to load
     popup_observer.Wait();
     rewards_browsertest_util::WaitForElementToAppear(
-        popup_contents, std::string("[data-test-id=")
-                            .append(enable_button_test_id)
-                            .append("]"));
+        popup_contents, "[data-test-id='rewards-onboarding-main-button']");
 
     return popup_contents;
   }
@@ -170,11 +167,10 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled, PopupAccepted) {
       contents, kBraveRequestAdsEnabledExists, &has_api));
   EXPECT_TRUE(has_api);
 
-  content::WebContents* popup_contents =
-      OpenRequestAdsEnabledPopup(contents, "brave-talk-turn-on-rewards");
+  content::WebContents* popup_contents = OpenRequestAdsEnabledPopup(contents);
 
   rewards_browsertest_util::WaitForElementThenClick(
-      popup_contents, "[data-test-id=brave-talk-turn-on-rewards]");
+      popup_contents, "[data-test-id='rewards-onboarding-main-button']");
 
   bool enabled;
   EXPECT_TRUE(ExecuteScriptAndExtractBool(
@@ -199,7 +195,7 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
       contents, kBraveRequestAdsEnabledExists, &has_api));
   EXPECT_TRUE(has_api);
 
-  OpenRequestAdsEnabledPopup(contents, "brave-talk-turn-on-private-ads");
+  OpenRequestAdsEnabledPopup(contents);
 
   ui_test_utils::NavigateToURLWithDisposition(
       browser(), GURL("about:blank"), WindowOpenDisposition::NEW_FOREGROUND_TAB,

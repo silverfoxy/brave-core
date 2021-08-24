@@ -356,9 +356,8 @@ bool BraveActionsContainer::CanStartDragForView(View* sender,
 // BraveActionsContainerDelegate members
 void BraveActionsContainer::OnPopupClosed(
     const extensions::ExtensionId& extension_id) {
-  if (extension_id == brave_rewards_extension_id && rewards_service_) {
-    rewards_service_->OnRewardsPanelClosed(GetCurrentWebContents());
-  }
+  DCHECK(brave_action_api_);
+  brave_action_api_->NotifyActionUIClosed(browser_, extension_id);
 }
 // end BraveActionsContainerDelegate members
 

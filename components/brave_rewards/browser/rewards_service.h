@@ -26,7 +26,6 @@ class Profile;
 
 namespace content {
 class NavigationHandle;
-class WebContents;
 }
 
 namespace brave_rewards {
@@ -202,8 +201,6 @@ class RewardsService : public KeyedService {
   // time will turn on both Ads and auto-contribute. Subsequent calls will only
   // turn on Ads.
   virtual void EnableRewards() = 0;
-
-  virtual void OnRewardsPanelClosed(content::WebContents* web_contents) = 0;
 
   virtual void GetBalanceReport(
       const uint32_t month,

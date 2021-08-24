@@ -11,7 +11,6 @@
 
 #include "brave/browser/brave_ads/ads_service_factory.h"
 #include "brave/browser/brave_rewards/rewards_service_factory.h"
-#include "brave/browser/extensions/api/brave_action_api.h"
 #include "brave/browser/extensions/brave_component_loader.h"
 #include "brave/components/brave_ads/browser/ads_service.h"
 #include "brave/components/brave_rewards/browser/rewards_service.h"
@@ -64,12 +63,21 @@ void BraveAdsHost::RequestAdsEnabled(RequestAdsEnabledCallback callback) {
     std::move(callback).Run(false);
     return;
   }
+
+  Browser* browser = chrome::FindBrowserWithWebContents(web_contents_);
+  if (!browser) {
+    std::move(callback).Run(false);
+    return;
+  }
+
   callback_ = std::move(callback);
 
   rewards_service->StartProcess(base::DoNothing());
   rewards_service_observation_.Observe(rewards_service);
+  action_ui_observation_.Observe(extensions::BraveActionAPI::Get(browser));
+  initiated_browser_ = browser;
 
-  if (!ShowRewardsPopup()) {
+  if (!ShowRewardsPopup(browser)) {
     Reset();
     std::move(callback_).Run(false);
   }
@@ -85,7 +93,7 @@ void BraveAdsHost::WebContentsDestroyed() {
   }
 }
 
-void BraveAdsHost::OnProcessForEnableRewardsStarted() {
+void BraveAdsHost::OnRewardsEnabled() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   Reset();
@@ -96,26 +104,6 @@ void BraveAdsHost::OnProcessForEnableRewardsStarted() {
   }
 
   std::move(callback_).Run(true);
-}
-
-void BraveAdsHost::OnRewardsPanelClosed(content::WebContents* web_contents) {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  if (web_contents_ != web_contents) {
-    const Browser* current_browser =
-        chrome::FindBrowserWithWebContents(web_contents_);
-    if (current_browser != chrome::FindLastActive()) {
-      return;
-    }
-  }
-
-  Reset();
-
-  if (!callback_) {
-    NOTREACHED();
-    return;
-  }
-
-  std::move(callback_).Run(false);
 }
 
 void BraveAdsHost::OnAdsEnabled(brave_rewards::RewardsService* rewards_service,
@@ -133,12 +121,30 @@ void BraveAdsHost::OnAdsEnabled(brave_rewards::RewardsService* rewards_service,
   std::move(callback_).Run(ads_enabled);
 }
 
-bool BraveAdsHost::ShowRewardsPopup() {
-  Browser* browser = chrome::FindBrowserWithWebContents(web_contents_);
-  if (!browser) {
-    return false;
+void BraveAdsHost::OnActionUIClosed(Browser* browser,
+                                    const std::string& extension_id) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  if (extension_id != brave_rewards_extension_id) {
+    return;
   }
 
+  const Browser* current_browser =
+      chrome::FindBrowserWithWebContents(web_contents_);
+  if (browser != current_browser && browser != initiated_browser_) {
+    return;
+  }
+
+  Reset();
+
+  if (!callback_) {
+    NOTREACHED();
+    return;
+  }
+
+  std::move(callback_).Run(false);
+}
+
+bool BraveAdsHost::ShowRewardsPopup(Browser* browser) {
   auto* extension_service =
       extensions::ExtensionSystem::Get(profile_)->extension_service();
   if (!extension_service) {
@@ -157,6 +163,8 @@ bool BraveAdsHost::ShowRewardsPopup() {
 
 void BraveAdsHost::Reset() {
   rewards_service_observation_.Reset();
+  action_ui_observation_.Reset();
+  initiated_browser_ = nullptr;
 }
 
 }  // namespace brave_ads

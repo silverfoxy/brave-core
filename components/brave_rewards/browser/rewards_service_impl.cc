@@ -1701,14 +1701,7 @@ void RewardsServiceImpl::EnableRewards() {
       &RewardsServiceImpl::OnStartProcessForEnableRewards, AsWeakPtr()));
 
   for (auto& observer : observers_) {
-    observer.OnProcessForEnableRewardsStarted();
-  }
-}
-
-void RewardsServiceImpl::OnRewardsPanelClosed(
-    content::WebContents* web_contents) {
-  for (auto& observer : observers_) {
-    observer.OnRewardsPanelClosed(web_contents);
+    observer.OnRewardsEnabled();
   }
 }
 
