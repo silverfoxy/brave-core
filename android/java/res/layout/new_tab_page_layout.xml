@@ -61,13 +61,6 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-<!--         <include
-            android:id="@+id/news_settings_bar_layout_id"
-            layout="@layout/brave_news_settings_bar_layout"
-            android:layout_marginTop="26dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            /> -->
 
             <LinearLayout
                 android:id="@+id/ntp_widget_layout"
@@ -131,6 +124,12 @@
 
             </FrameLayout>
 
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/newsRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+         />
 
             <include
                 android:id="@+id/optin_layout_id"
@@ -203,11 +202,15 @@
 
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/newsRecycler"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-         />
+    <ProgressBar
+        android:id="@+id/feed_spinner"
+        style="?android:progressBarStyleLarge"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:visibility="gone"
+        android:layout_gravity="center" />
+
+
 
     <include layout="@layout/ntp_non_disruptive_banner"/>
     <include layout="@layout/bre_bottom_banner"/>

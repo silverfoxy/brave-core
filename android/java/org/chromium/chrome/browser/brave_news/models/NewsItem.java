@@ -112,29 +112,22 @@ public class NewsItem {
         this.score = score;
     }
 
-
     @Override
     public String toString() {
-        return "NewsItem{" +
-                "category='" + category + '\'' +
-                ", publishTime='" + publish_time + '\'' +
-                ", url='" + url + '\'' +
-                ", title='" + title + '\'' +
-                ", description='" + description + '\'' +
-                ", content_type='" + content_type + '\'' +
-                ", publisher_id='" + publisher_id + '\'' +
-                ", publisher_name='" + publisher_name + '\'' +
-                ", creative_instance_id='" + creative_instance_id + '\'' +
-                ", url_hash='" + url_hash + '\'' +
-                ", padded_img='" + padded_img + '\'' +
-                ", score=" + score +
-                '}';
+        return "NewsItem{"
+                + "category='" + category + '\'' + ", publishTime='" + publish_time + '\''
+                + ", url='" + url + '\'' + ", title='" + title + '\'' + ", description='"
+                + description + '\'' + ", content_type='" + content_type + '\'' + ", publisher_id='"
+                + publisher_id + '\'' + ", publisher_name='" + publisher_name + '\''
+                + ", creative_instance_id='" + creative_instance_id + '\'' + ", url_hash='"
+                + url_hash + '\'' + ", padded_img='" + padded_img + '\'' + ", score=" + score + '}';
     }
 
-    public NewsItem() {
-    }
+    public NewsItem() {}
 
-    public NewsItem(String category, String publish_time, String url, String title, String description, String content_type, String publisher_id, String publisher_name, String creative_instance_id, String url_hash, String padded_img, String score) {
+    public NewsItem(String category, String publish_time, String url, String title,
+            String description, String content_type, String publisher_id, String publisher_name,
+            String creative_instance_id, String url_hash, String padded_img, String score) {
         this.category = category;
         this.publish_time = publish_time;
         this.url = url;

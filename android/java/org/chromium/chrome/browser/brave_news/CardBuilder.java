@@ -1,5 +1,7 @@
 package org.chromium.chrome.browser.brave_news;
 
+import static org.chromium.ui.base.ViewUtils.dpToPx;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
@@ -12,6 +14,7 @@ import android.graphics.drawable.shapes.RoundRectShape;
 import android.net.Uri;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -27,11 +30,14 @@ import androidx.annotation.RequiresApi;
 import androidx.core.widget.NestedScrollView;
 
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.brave_news.models.NewsItem;
+import org.chromium.chrome.browser.util.ConfigurationUtils;
+import org.chromium.ui.base.DeviceFormFactor;
 
 import java.util.ArrayList;
 
-public class CardBuilder { //implements ItemClickListener {
+public class CardBuilder { // implements ItemClickListener {
 
     private final int HEADLINE = 0;
     private final int HEADLINEPAIR = 1;
@@ -51,23 +57,41 @@ public class CardBuilder { //implements ItemClickListener {
     NewsItem mNewsItem;
     int mPosition;
     int mType;
+    int horizontalMargin;
+    boolean isTablet;
+    int mDeviceWidth;
+    boolean isLandscape;
 
     private ItemClickListener mClickListener;
     private String TAG = "BN";
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public CardBuilder(LinearLayout layout, Activity activity, int position, NewsItem newsItem, int type) {
+    public CardBuilder(
+            LinearLayout layout, Activity activity, int position, NewsItem newsItem, int type) {
         linearLayout = layout;
         mActivity = activity;
         mPosition = position;
         mType = type;
         mNewsItem = newsItem;
+
+        // DisplayMetrics displayMetrics = new DisplayMetrics();
+        // activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        // int mDeviceHeight = displayMetrics.heightPixels;
+        // mDeviceWidth = displayMetrics.widthPixels;
+        mDeviceWidth = ConfigurationUtils.getDisplayMetrics(activity).get("width");
+
+        isTablet = ConfigurationUtils.isTablet(
+                activity); // DeviceFormFactor.isNonMultiDisplayContextOnTablet(activity);
+        isLandscape = ConfigurationUtils.isLandscape(activity);
+
+        horizontalMargin = isTablet
+                ? isLandscape ? (int) (0.20 * mDeviceWidth) : (int) (0.10 * mDeviceWidth)
+                : 40;
+
         createCard(mType, mPosition);
     }
 
-    public void initItems() {
-
-    }
+    public void initItems() {}
 
     public void removeCard(LinearLayout layout) {
         layout.removeAllViews();
@@ -75,19 +99,22 @@ public class CardBuilder { //implements ItemClickListener {
         layout.invalidate();
     }
 
-
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public LinearLayout createCard(int type, int position) {
         TableLayout tableLayoutTopNews = new TableLayout(mActivity);
 
-        TableLayout.LayoutParams tableParamsTopNews = new TableLayout.LayoutParams(TableLayout.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        TableLayout.LayoutParams tableParamsRow1 = new TableLayout.LayoutParams(TableLayout.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-//        RecyclerView.LayoutParams linearLayoutParams = new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.MATCH_PARENT);
+        TableLayout.LayoutParams tableParamsTopNews = new TableLayout.LayoutParams(
+                TableLayout.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        TableLayout.LayoutParams tableParamsRow1 = new TableLayout.LayoutParams(
+                TableLayout.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        //        RecyclerView.LayoutParams linearLayoutParams = new
+        //        RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,
+        //        RecyclerView.LayoutParams.MATCH_PARENT);
         int displayHeight = mActivity.getResources().getDisplayMetrics().heightPixels;
         TableRow rowTop = new TableRow(mActivity);
         TextView topText = new TextView(mActivity);
 
-        Log.d("BN", "display height:"+displayHeight);
+        Log.d("BN", "display height:" + displayHeight);
         TableRow row1 = new TableRow(mActivity);
         TableRow row2 = new TableRow(mActivity);
         TableRow row3 = new TableRow(mActivity);
@@ -96,21 +123,28 @@ public class CardBuilder { //implements ItemClickListener {
         LinearLayout layout2 = new LinearLayout(mActivity);
         LinearLayout layout3 = new LinearLayout(mActivity);
 
-        LinearLayout.LayoutParams linearLayoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-//        linearLayoutParams.setMargins(0, 40, 0, 40);
-        linearLayoutParams.setMargins(40, 0, 40, 40);
+        LinearLayout.LayoutParams linearLayoutParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        //        linearLayoutParams.setMargins(0, 40, 0, 40);
+        linearLayoutParams.setMargins(horizontalMargin, 0, horizontalMargin, 40);
 
         switch (type) {
             case WELCOME:
-                NestedScrollView.LayoutParams welcomeParams = new NestedScrollView.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                welcomeParams.setMargins(40, displayHeight - 570, 40, 500);
+                NestedScrollView.LayoutParams welcomeParams =
+                        new NestedScrollView.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT);
+                welcomeParams.setMargins(
+                        horizontalMargin, displayHeight - 570, horizontalMargin, 500);
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
                 linearLayout.setLayoutParams(welcomeParams);
-                linearLayout.setBackgroundColor(mActivity.getResources().getColor(R.color.card_background));
+                linearLayout.setBackgroundColor(
+                        mActivity.getResources().getColor(R.color.card_background));
 
                 ImageView closeImage = new ImageView(mActivity);
-                LinearLayout.LayoutParams closeImageParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-//                titleImageParams.height = 80;
+                LinearLayout.LayoutParams closeImageParams =
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+                //                titleImageParams.height = 80;
                 closeImageParams.gravity = Gravity.RIGHT;
                 closeImageParams.setMargins(0, 10, 30, 0);
                 closeImage.setLayoutParams(closeImageParams);
@@ -119,8 +153,10 @@ public class CardBuilder { //implements ItemClickListener {
                 linearLayout.addView(closeImage);
 
                 ImageView titleImage = new ImageView(mActivity);
-                LinearLayout.LayoutParams titleImageParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-//                titleImageParams.height = 80;
+                LinearLayout.LayoutParams titleImageParams =
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+                //                titleImageParams.height = 80;
                 titleImageParams.gravity = Gravity.CENTER;
                 titleImageParams.setMargins(30, 2, 30, 50);
                 titleImage.setLayoutParams(titleImageParams);
@@ -129,11 +165,15 @@ public class CardBuilder { //implements ItemClickListener {
                 linearLayout.addView(titleImage);
 
                 TextView titleWelcome = new TextView(mActivity);
-                LinearLayout.LayoutParams titleWelcomeParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+                LinearLayout.LayoutParams titleWelcomeParams =
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT, 1f);
                 titleWelcome.setTextSize(18);
                 titleWelcome.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                titleWelcome.setTextColor(mActivity.getResources().getColor(R.color.news_text_color));
-                titleWelcome.setText("Today’s top stories in a completely private feed, just for you.");
+                titleWelcome.setTextColor(
+                        mActivity.getResources().getColor(R.color.news_text_color));
+                titleWelcome.setText(
+                        "Today’s top stories in a completely private feed, just for you.");
                 titleWelcome.setTypeface(null, Typeface.BOLD);
                 titleWelcomeParams.gravity = Gravity.CENTER;
                 titleWelcome.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -142,11 +182,15 @@ public class CardBuilder { //implements ItemClickListener {
                 linearLayout.addView(titleWelcome);
 
                 TextView subtitleWelcome = new TextView(mActivity);
-                LinearLayout.LayoutParams subtitleWelcomeParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+                LinearLayout.LayoutParams subtitleWelcomeParams =
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT, 1f);
                 subtitleWelcome.setTextSize(14);
-                subtitleWelcome.setTextColor(mActivity.getResources().getColor(R.color.news_text_color));
+                subtitleWelcome.setTextColor(
+                        mActivity.getResources().getColor(R.color.news_text_color));
                 subtitleWelcome.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                subtitleWelcome.setText("Brave Today matches your interests on your device so your personal information never leaves your browser. New content updated throughout the day.");
+                subtitleWelcome.setText(
+                        "Brave Today matches your interests on your device so your personal information never leaves your browser. New content updated throughout the day.");
                 subtitleWelcomeParams.gravity = Gravity.CENTER;
                 subtitleWelcome.setGravity(Gravity.CENTER_HORIZONTAL);
                 subtitleWelcomeParams.setMargins(40, 30, 40, 30);
@@ -154,12 +198,15 @@ public class CardBuilder { //implements ItemClickListener {
                 linearLayout.addView(subtitleWelcome);
 
                 Button settingsButWelcome = new Button(mActivity);
-                LinearLayout.LayoutParams settingsButWelcomeParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+                LinearLayout.LayoutParams settingsButWelcomeParams =
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT, 1f);
                 settingsButWelcome.setTextSize(16);
                 settingsButWelcome.setAllCaps(false);
                 settingsButWelcome.setText("Turn on Brave News");
                 settingsButWelcomeParams.gravity = Gravity.CENTER;
-                settingsButWelcome.setTextColor(mActivity.getResources().getColor(R.color.news_text_color));
+                settingsButWelcome.setTextColor(
+                        mActivity.getResources().getColor(R.color.news_text_color));
                 settingsButWelcome.setGravity(Gravity.CENTER);
                 settingsButWelcome.setPadding(40, 20, 40, 20);
                 settingsButWelcomeParams.setMargins(30, 30, 30, 30);
@@ -175,9 +222,12 @@ public class CardBuilder { //implements ItemClickListener {
                 linearLayout.addView(settingsButWelcome);
 
                 TextView learnMoreWelcome = new TextView(mActivity);
-                LinearLayout.LayoutParams learnMoreWelcomeParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+                LinearLayout.LayoutParams learnMoreWelcomeParams =
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT, 1f);
                 learnMoreWelcome.setTextSize(16);
-                learnMoreWelcome.setTextColor(mActivity.getResources().getColor(R.color.news_text_color));
+                learnMoreWelcome.setTextColor(
+                        mActivity.getResources().getColor(R.color.news_text_color));
                 learnMoreWelcome.setText("Learn more about your data");
                 learnMoreWelcomeParams.gravity = Gravity.CENTER;
                 learnMoreWelcome.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -190,30 +240,32 @@ public class CardBuilder { //implements ItemClickListener {
                         if (mClickListener != null) mClickListener.onOptInClick(view);
                     }
                 });
-
                 linearLayout.addView(learnMoreWelcome);
 
                 break;
             case HEADLINE:
-
                 addElementsToSingleLayout(linearLayout, position, HEADLINE);
                 linearLayout.setBackground(makeRound(CARD_LAYOUT));
 
                 break;
             case DISPLAY_AD:
-                linearLayout.setBackgroundColor(mActivity.getResources().getColor(R.color.card_background));
+                linearLayout.setBackgroundColor(
+                        mActivity.getResources().getColor(R.color.card_background));
                 addElementsToSingleLayout(linearLayout, position, HEADLINE);
                 linearLayout.setBackground(makeRound(CARD_LAYOUT));
 
                 break;
             case DEALS:
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
-                linearLayout.setBackgroundColor(mActivity.getResources().getColor(R.color.card_background));
+                linearLayout.setBackgroundColor(
+                        mActivity.getResources().getColor(R.color.card_background));
                 linearLayoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
-                linearLayoutParams.setMargins(40, 0, 40, 20);
+                linearLayoutParams.setMargins(horizontalMargin, 0, horizontalMargin, 20);
                 linearLayout.setLayoutParams(linearLayoutParams);
 
-                tableLayoutTopNews.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+                tableLayoutTopNews.setLayoutParams(
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT));
 
                 tableParamsTopNews.setMargins(20, 20, 20, 20);
                 tableParamsTopNews.weight = 1;
@@ -250,10 +302,12 @@ public class CardBuilder { //implements ItemClickListener {
                 Log.d(TAG, "creating HREE_ROWS_HEADLINES");
 
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
-                tableLayoutTopNews.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+                tableLayoutTopNews.setLayoutParams(
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT));
                 tableParamsTopNews.setMargins(10, 30, 5, 30);
                 linearLayoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
-                linearLayoutParams.setMargins(40, 0, 40, 20);
+                linearLayoutParams.setMargins(horizontalMargin, 0, horizontalMargin, 20);
                 linearLayout.setLayoutParams(linearLayoutParams);
 
                 linearLayout.addView(tableLayoutTopNews);
@@ -269,7 +323,7 @@ public class CardBuilder { //implements ItemClickListener {
                 topText.setTextSize(20);
                 topText.setTextColor(mActivity.getResources().getColor(R.color.news_text_color));
                 topText.setTypeface(null, Typeface.BOLD);
-//
+                //
                 addElementsToSingleLayout(row1, position, type);
 
                 row2.setPadding(5, 5, 5, 5);
@@ -282,37 +336,73 @@ public class CardBuilder { //implements ItemClickListener {
                 linearLayout.setBackground(makeRound(CARD_LAYOUT));
                 break;
             case TOP_NEWS:
- /*3 rows
+                /*3 rows
 
-                TOP NEWS
+                               TOP NEWS
 
-                Title           ---------
-                Description     |       |
-                                |       |
-                                ---------
+                               Title           ---------
+                               Description     |       |
+                                               |       |
+                                               ---------
 
-                Title           ---------
-                Description     |       |
-                                |       |
-                                --------
+                               Title           ---------
+                               Description     |       |
+                                               |       |
+                                               --------
 
 
-                Title           ---------
-                Description     |       |
-                                |       |
-                                --------
+                               Title           ---------
+                               Description     |       |
+                                               |       |
+                                               --------
 
-                 */
+                                               tablet landscape credit position good, first card too
+                   low with int topCardMargin = ConfigurationUtils.isLandscape(mActivity) ? (int)
+                   (dpHeight - 50) : (int) (dpHeight + 200); tablet portrait credit position too
+                   high, first card too low
+
+                                */
 
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
                 linearLayoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT;
-                linearLayout.setBackgroundColor(mActivity.getResources().getColor(R.color.card_background));
+                linearLayout.setBackgroundColor(
+                        mActivity.getResources().getColor(R.color.card_background));
 
-                LinearLayout.LayoutParams params = new TableLayout.LayoutParams(TableLayout.LayoutParams.MATCH_PARENT, TableLayout.LayoutParams.WRAP_CONTENT);
+                // DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+                float dpHeight = ConfigurationUtils.getDpDisplayMetrics(mActivity).get("height");
 
-                params.setMargins(40, 0, 40, 40);
+                LinearLayout.LayoutParams params =
+                        new TableLayout.LayoutParams(TableLayout.LayoutParams.MATCH_PARENT,
+                                TableLayout.LayoutParams.WRAP_CONTENT);
+                Log.d("bn", "firstcard dpheight:" + dpHeight);
+                Log.d("bn", "firstcard dpheight px:" + dpToPx(mActivity, dpHeight));
+                Log.d("bn", "firstcard dpheight+200:" + (int) (dpHeight + 200));
+                Log.d("bn", "firstcard dptopx 35:" + dpToPx(mActivity, 35));
+
+                // int imageCreditCorrection = isLandscape ? (int) (dpHeight - 50) : (int) (dpHeight
+                // + 450);
+                int topCardMargin =
+                        (int) (BraveActivity.getBraveActivity().getImageCreditLayoutBottom() + 20);
+                Log.d("bn", "firstcard topCardMargin:" + topCardMargin);
+                // if (ConfigurationUtils.isTablet(mActivity)){
+                //     topCardMargin = ConfigurationUtils.isLandscape(mActivity) ? (int)
+                //     (BraveActivity.getBraveActivity().getImageCreditLayoutBottom() + 50) : (int)
+                //     (BraveActivity.getBraveActivity().getImageCreditLayoutBottom() + 50);
+                // } else {
+                //     topCardMargin = ConfigurationUtils.isLandscape(mActivity) ? (int) (dpHeight -
+                //     200) : (int) (dpHeight - 20);
+                // }
+
+                // int topCardMargin = ConfigurationUtils.isLandscape(mActivity) ? (int) (dpHeight -
+                // 650) : (int) (dpHeight - 200);
+
+                params.setMargins(horizontalMargin, 0, horizontalMargin, 40);
                 int height = mActivity.getResources().getDisplayMetrics().heightPixels;
                 linearLayout.setLayoutParams(params);
+                Log.d("bn",
+                        "newlayout display height:"
+                                + ConfigurationUtils.getDisplayMetrics(mActivity).get("height"));
+                Log.d("bn", "newlayout linearLayout.getBottom:" + linearLayout.getBottom());
                 linearLayout.addView(tableLayoutTopNews);
                 tableLayoutTopNews.addView(rowTop);
                 rowTop.addView(topText);
@@ -336,129 +426,127 @@ public class CardBuilder { //implements ItemClickListener {
                 addElementsToSingleLayout(row3, position + 2, THREE_ROWS_PHOTO);
                 linearLayout.setBackground(makeRound(CARD_LAYOUT));
 
-
                 break;
             case HEADLINEPAIR:
-         /*headlinepair
+                /*headlinepair
 
-                      Image      Image
-                    ---------    ---------
-                    |       |    |       |
-                    |       |    |       |
-                    ---------    ---------
-                      Title        Title
-                   Description    Description
+                             Image      Image
+                           ---------    ---------
+                           |       |    |       |
+                           |       |    |       |
+                           ---------    ---------
+                             Title        Title
+                          Description    Description
 
-                 */
+                        */
                 linearLayout.setOrientation(LinearLayout.HORIZONTAL);
                 linearLayout.setBackgroundColor(Color.TRANSPARENT);
                 linearLayoutParams.height = 650;
-                linearLayoutParams.setMargins(40, 0, 40, 20);
+                linearLayoutParams.setMargins(horizontalMargin, 0, horizontalMargin, 20);
                 linearLayout.setLayoutParams(linearLayoutParams);
 
-                LinearLayout.LayoutParams cellParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+                LinearLayout.LayoutParams cellParams =
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT, 1f);
                 cellParams.setMargins(0, 0, 20, 0);
                 LinearLayout layoutLeft = new LinearLayout(mActivity);
                 LinearLayout layoutRight = new LinearLayout(mActivity);
                 linearLayout.addView(layoutLeft);
                 layoutLeft.setLayoutParams(cellParams);
                 layoutLeft.setOrientation(LinearLayout.VERTICAL);
-//                layoutLeft.setPadding(10, 10, 10, 10);
-//                layoutLeft.setBackgroundColor(mActivity.getResources().getColor(R.color.card_background));
+                //                layoutLeft.setPadding(10, 10, 10, 10);
+                //                layoutLeft.setBackgroundColor(mActivity.getResources().getColor(R.color.card_background));
                 addElementsToSingleLayout(layoutLeft, position, type);
 
-//                LinearLayout layoutRight = new LinearLayout(mActivity);
+                //                LinearLayout layoutRight = new LinearLayout(mActivity);
                 linearLayout.addView(layoutRight);
                 cellParams.setMargins(20, 0, 0, 0);
                 layoutRight.setLayoutParams(cellParams);
                 layoutRight.setOrientation(LinearLayout.VERTICAL);
-//                layoutLeft.setPadding(10, 10, 10, 10);
-//                layoutRight.setBackgroundColor(mActivity.getResources().getColor(R.color.card_background));
+                //                layoutLeft.setPadding(10, 10, 10, 10);
+                //                layoutRight.setBackgroundColor(mActivity.getResources().getColor(R.color.card_background));
 
                 addElementsToSingleLayout(layoutRight, position + 1, type);
                 break;
-
         }
 
         linearLayout.setBackground(makeRound(CARD_LAYOUT));
 
         return linearLayout;
-
     }
 
     private LayerDrawable makeRound(int type) {
-
-        float[] outerRadii = new float[]{15, 15, 15, 15, 15, 15, 15, 15};
-        float[] innerRadii = new float[]{15, 15, 15, 15, 15, 15, 15, 15};
+        float[] outerRadii = new float[] {15, 15, 15, 15, 15, 15, 15, 15};
+        float[] innerRadii = new float[] {15, 15, 15, 15, 15, 15, 15, 15};
 
         // Set the shape background
         ShapeDrawable backgroundShape = null;
-        new ShapeDrawable(new RoundRectShape(
-                outerRadii,
-                null,
-                innerRadii
-        ));
+        new ShapeDrawable(new RoundRectShape(outerRadii, null, innerRadii));
 
         if (type == BUTTON_LAYOUT) {
-            outerRadii = new float[]{75, 75, 75, 75, 75, 75, 75, 75};
-            innerRadii = new float[]{75, 75, 75, 75, 75, 75, 75, 75};
-            backgroundShape = new ShapeDrawable(new RoundRectShape(
-                    outerRadii,
-                    null,
-                    innerRadii
-            ));
-            backgroundShape.getPaint().setColor(mActivity.getResources().getColor(R.color.turn_on_button)); // background color
+            outerRadii = new float[] {75, 75, 75, 75, 75, 75, 75, 75};
+            innerRadii = new float[] {75, 75, 75, 75, 75, 75, 75, 75};
+            backgroundShape = new ShapeDrawable(new RoundRectShape(outerRadii, null, innerRadii));
+            backgroundShape.getPaint().setColor(
+                    mActivity.getResources().getColor(R.color.turn_on_button)); // background color
             backgroundShape.getPaint().setStyle(Paint.Style.FILL); // Define background
             backgroundShape.getPaint().setAntiAlias(true);
             backgroundShape.setPadding(50, 20, 50, 20);
 
         } else if (type == CARD_LAYOUT) {
-            backgroundShape = new ShapeDrawable(new RoundRectShape(
-                    outerRadii,
-                    null,
-                    innerRadii
-            ));
+            backgroundShape = new ShapeDrawable(new RoundRectShape(outerRadii, null, innerRadii));
         }
 
-
         // Initialize an array of drawables
-        Drawable[] drawables = new Drawable[]{
-                backgroundShape
-        };
+        Drawable[] drawables = new Drawable[] {backgroundShape};
         // Initialize a layer drawable object
         LayerDrawable layerDrawable = new LayerDrawable(drawables);
         return layerDrawable;
     }
 
     private void addElementsToSingleLayout(ViewGroup view, int position, int itemType) {
-
         ImageView image = new ImageView(mActivity);
         ImageView logo = new ImageView(mActivity);
         TextView title = new TextView(mActivity);
         TextView source = new TextView(mActivity);
         TextView desc = new TextView(mActivity);
 
-        LinearLayout.LayoutParams linearLayoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-        LinearLayout.LayoutParams headLineParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-        LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-        LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        LinearLayout.LayoutParams linearLayoutParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+        LinearLayout.LayoutParams headLineParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
 
-        TableLayout.LayoutParams tableParamsTopNews = new TableLayout.LayoutParams(TableLayout.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        TableLayout.LayoutParams tableParamsTopNews = new TableLayout.LayoutParams(
+                TableLayout.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 
-        TableRow.LayoutParams linearLayoutRowParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
-        TableRow.LayoutParams linearLayoutRowParams1 = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
-        TableRow.LayoutParams sourceRowParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
-        TableRow.LayoutParams titleRowParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
-        TableRow.LayoutParams descRowParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
-        TableRow.LayoutParams imageRowParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
+        TableRow.LayoutParams linearLayoutRowParams = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
+        TableRow.LayoutParams linearLayoutRowParams1 = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
+        TableRow.LayoutParams sourceRowParams = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
+        TableRow.LayoutParams titleRowParams = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
+        TableRow.LayoutParams descRowParams = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
+        TableRow.LayoutParams imageRowParams = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT);
 
         LinearLayout layou1 = new LinearLayout(mActivity);
 
-//        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-//                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+        //        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+        //                LinearLayout.LayoutParams.MATCH_PARENT,
+        //                LinearLayout.LayoutParams.MATCH_PARENT);
         LinearLayout layout = (LinearLayout) view;
         switch (itemType) {
             case WELCOME:
@@ -504,15 +592,17 @@ public class CardBuilder { //implements ItemClickListener {
                 break;
             case HEADLINE:
                 layout.setOrientation(LinearLayout.VERTICAL);
-                linearLayoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                linearLayoutParams.setMargins(50, 20, 40, 50);
+                linearLayoutParams =
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT);
+                linearLayoutParams.setMargins(horizontalMargin, 20, horizontalMargin, 50);
                 layout.setLayoutParams(linearLayoutParams);
 
                 layout.addView(image);
                 layout.addView(title);
                 layout.addView(desc);
                 layout.addView(logo);
-//
+                //
                 imageParams.height = 0;
                 imageParams.weight = 7;
                 image.setLayoutParams(imageParams);
@@ -555,8 +645,8 @@ public class CardBuilder { //implements ItemClickListener {
 
                 titleParams.weight = 4;
                 titleParams.height = 0;
-//                title.setGravity(Gravity.CENTER_VERTICAL);
-//                titleParams.setMargins(0, 10, 0, 0);
+                //                title.setGravity(Gravity.CENTER_VERTICAL);
+                //                titleParams.setMargins(0, 10, 0, 0);
                 title.setLayoutParams(titleParams);
                 title.setTextSize(14);
                 title.setLines(2);
@@ -567,8 +657,8 @@ public class CardBuilder { //implements ItemClickListener {
                 descParams.weight = 1;
                 descParams.height = 0;
                 desc.setTextSize(11);
-//                desc.setGravity(Gravity.TOP);
-//                params.setMargins(0,0,0,0);
+                //                desc.setGravity(Gravity.TOP);
+                //                params.setMargins(0,0,0,0);
                 desc.setLayoutParams(descParams);
                 desc.setPadding(10, 0, 10, 10);
                 layout.addView(desc);
@@ -577,7 +667,7 @@ public class CardBuilder { //implements ItemClickListener {
                 logoParams.height = 0;
                 logoParams.weight = 1;
                 logoParams.gravity = Gravity.CENTER_VERTICAL;
-//                params.setMargins(0,0,0,30);
+                //                params.setMargins(0,0,0,30);
                 logo.setScaleType(ImageView.ScaleType.FIT_START);
                 logo.setPadding(10, 00, 10, 10);
                 logo.setImageResource(R.drawable.logo);
@@ -675,7 +765,6 @@ public class CardBuilder { //implements ItemClickListener {
                 layout.addView(title);
                 layout.addView(desc);
                 break;
-
         }
 
         title.setTextColor(mActivity.getResources().getColor(R.color.news_text_color));
@@ -685,15 +774,16 @@ public class CardBuilder { //implements ItemClickListener {
         title.setText(mNewsItem.getTitle());
         desc.setText(mNewsItem.getPublish_time());
 
-//        PrivateCDNHelper privateHelper = new PrivateCDNHelper(image);
-//        privateHelper.setPaddedImage(image, mNewsItems.get(position).getPadded_img());
-//  to add when there is an image      image.setImageResource(R.drawable.img4);
+        //        PrivateCDNHelper privateHelper = new PrivateCDNHelper(image);
+        //        privateHelper.setPaddedImage(image, mNewsItems.get(position).getPadded_img());
+        //  to add when there is an image      image.setImageResource(R.drawable.img4);
 
         title.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d("Test", "click itemid:" + (mNewsItem.getUrl()));
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(mNewsItem.getUrl()));
+                Intent browserIntent =
+                        new Intent(Intent.ACTION_VIEW, Uri.parse(mNewsItem.getUrl()));
                 mActivity.startActivity(browserIntent);
             }
         });
@@ -705,25 +795,25 @@ public class CardBuilder { //implements ItemClickListener {
     }
 
     //
-//    @Override
-//    public void onClick(View v) {
-//        if (mClickListener != null) mClickListener.onItemClick(view, 1);
-//    }
-//
-//    @Override
-//    public void onItemClick(View view, int position) {
-//
-//    }
-//
-//    @Override
-//    public void onOptInClick(View view) {
-//
-//    }
-//
-//    @Override
-//    public void onCloseClick(View view) {
-//
-//    }
+    //    @Override
+    //    public void onClick(View v) {
+    //        if (mClickListener != null) mClickListener.onItemClick(view, 1);
+    //    }
+    //
+    //    @Override
+    //    public void onItemClick(View view, int position) {
+    //
+    //    }
+    //
+    //    @Override
+    //    public void onOptInClick(View view) {
+    //
+    //    }
+    //
+    //    @Override
+    //    public void onCloseClick(View view) {
+    //
+    //    }
     public interface ItemClickListener {
         void onItemClick(View view, int position);
 
@@ -731,7 +821,4 @@ public class CardBuilder { //implements ItemClickListener {
 
         void onCloseClick(View view);
     }
-
 }
-
-

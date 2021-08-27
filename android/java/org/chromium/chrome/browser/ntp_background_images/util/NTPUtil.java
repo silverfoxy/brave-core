@@ -33,6 +33,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
 
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
@@ -43,6 +44,7 @@ import org.chromium.chrome.browser.BraveRewardsNativeWorker;
 import org.chromium.chrome.browser.BraveRewardsPanelPopup;
 import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.app.ChromeActivity;
+import org.chromium.chrome.browser.compositor.CompositorViewHolder;
 import org.chromium.chrome.browser.ntp_background_images.NTPBackgroundImagesBridge;
 import org.chromium.chrome.browser.ntp_background_images.RewardsBottomSheetDialogFragment;
 import org.chromium.chrome.browser.ntp_background_images.model.BackgroundImage;
@@ -55,6 +57,7 @@ import org.chromium.chrome.browser.preferences.BravePreferenceKeys;
 import org.chromium.chrome.browser.preferences.SharedPreferencesManager;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.settings.BackgroundImagesPreferences;
+import org.chromium.chrome.browser.settings.BraveNewsPreferences;
 import org.chromium.chrome.browser.tab.TabLaunchType;
 import org.chromium.chrome.browser.util.ConfigurationUtils;
 import org.chromium.chrome.browser.util.ImageUtils;
@@ -62,7 +65,6 @@ import org.chromium.chrome.browser.util.PackageUtils;
 import org.chromium.components.user_prefs.UserPrefs;
 import org.chromium.content_public.browser.LoadUrlParams;
 import org.chromium.ui.base.DeviceFormFactor;
-import org.chromium.chrome.browser.compositor.CompositorViewHolder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,8 +72,6 @@ import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import androidx.core.widget.NestedScrollView;
-
 
 public class NTPUtil {
     private static final int BOTTOM_TOOLBAR_HEIGHT = 56;
@@ -85,14 +85,84 @@ public class NTPUtil {
         BraveRewardsNativeWorker.getInstance().SetAutoContributeEnabled(true);
     }
 
-    public static void updateOrientedUI(Context context, ViewGroup view, Point size) {
-        Log.d("bn", "optin click after");
+    public static int correctImageCreditLayoutTopPosition(NTPImage ntpImage) {
+        int imageCreditCorrection = 0;
+        boolean isCompensate = false;
+        SharedPreferences sharedPreferences = ContextUtils.getAppSharedPreferences();
+        boolean isShowOptin =
+                sharedPreferences.getBoolean(BraveNewsPreferences.PREF_SHOW_OPTIN, true);
+        if (isShowOptin) {
+            isCompensate = true;
+        }
+        Log.d("bn", "compensation isCompensate:" + isCompensate);
+        if (BraveActivity.getBraveActivity() != null) {
+            BraveActivity activity = BraveActivity.getBraveActivity();
+
+            // DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
+            // float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
+
+            float dpHeight = ConfigurationUtils.getDpDisplayMetrics(activity).get("height");
+            int pxHeight = dpToPx(activity, dpHeight);
+
+            boolean isTablet = ConfigurationUtils.isTablet(activity);
+            boolean isLandscape = ConfigurationUtils.isLandscape(activity);
+            imageCreditCorrection = isLandscape ? (int) (pxHeight * (isCompensate ? 0.46 : 0.54))
+                                                : (int) (pxHeight * (isCompensate ? 0.70 : 0.30));
+            if (ntpImage instanceof BackgroundImage) {
+                if (!isTablet) {
+                    Log.d("bn",
+                            "correctImageCreditLayoutTopPosition phone sponsored image dpHeight:"
+                                    + dpHeight);
+                    // imageCreditCorrection = isLandscape ? (int) (dpHeight - 250) : (int)
+                    // (dpHeight + 150);
+                    imageCreditCorrection = isLandscape
+                            ? (int) (pxHeight * (isCompensate ? 0.12 : 0.88))
+                            : (int) (pxHeight * (isCompensate ? 0.46 : 0.54));
+                }
+            } else {
+                if (!isTablet) {
+                    Log.d("bn",
+                            "correctImageCreditLayoutTopPosition phone sponsored image dpHeight:"
+                                    + dpHeight);
+                    // imageCreditCorrection = isLandscape ? (int) (dpHeight - 350) : (int)
+                    // (dpHeight - 120);
+                    imageCreditCorrection = isLandscape
+                            ? (int) (pxHeight * (isCompensate ? 0.02 : 0.98))
+                            : (int) (pxHeight * (isCompensate ? 0.30 : 0.70));
+                } else {
+                    Log.d("bn",
+                            "correctImageCreditLayoutTopPosition tablet sponsored image dpHeight:"
+                                    + dpHeight);
+                    // imageCreditCorrection = isLandscape ? (int) (dpHeight - 320) : (int)
+                    // (dpHeight + 150);
+                    imageCreditCorrection = isLandscape
+                            ? (int) (pxHeight * (isCompensate ? 0.28 : 0.72))
+                            : (int) (pxHeight * (isCompensate ? 0.56 : 0.44));
+                }
+            }
+        }
+
+        Log.d("bn",
+                "correctImageCreditLayoutTopPosition imageCreditCorrection:"
+                        + imageCreditCorrection);
+
+        return imageCreditCorrection;
+    }
+
+    public static void updateOrientedUI(
+            Context context, ViewGroup view, Point size, NTPImage ntpImage) {
+        Log.d("bn", "optin click after ");
+        SharedPreferences sharedPreferences = ContextUtils.getAppSharedPreferences();
+        boolean isNewsOn =
+                sharedPreferences.getBoolean(BraveNewsPreferences.PREF_TURN_ON_NEWS, false);
+        boolean isShowNewsOn =
+                sharedPreferences.getBoolean(BraveNewsPreferences.PREF_SHOW_NEWS, false);
+        Log.d("bn", "optin isNewsOn:" + isNewsOn + " isShowNewsOn:" + isShowNewsOn);
         LinearLayout parentLayout = (LinearLayout)view.findViewById(R.id.parent_layout);
-        CompositorViewHolder compositorView =  view.findViewById(R.id.compositor_view_holder);
-        // NestedScrollView nestedScrollView = (NestedScrollView)view.findViewById(R.id.nestedScrollView);
+        CompositorViewHolder compositorView = view.findViewById(R.id.compositor_view_holder);
         ViewGroup imageCreditLayout = view.findViewById(R.id.image_credit_layout);
         ViewGroup optinLayout = view.findViewById(R.id.optin_layout_id);
-        ViewGroup newsRecycler = view.findViewById(R.id.newsRecycler);
+        RecyclerView newsRecycler = (RecyclerView) view.findViewById(R.id.newsRecycler);
         ViewGroup mainLayout = view.findViewById(R.id.ntp_main_layout);
 
         ImageView sponsoredLogo = (ImageView)view.findViewById(R.id.sponsored_logo);
@@ -101,19 +171,17 @@ public class NTPUtil {
         // View first = compositorView.getChildAt(0);
         // View second = compositorView.getChildAt(1);
 
-        Log.d("BN", "first compositorView:"+compositorView);
+        Log.d("BN", "first compositorView:" + compositorView);
         // Log.d("BN", "first child:"+first);
         // Log.d("BN", "second child:"+second);
 
-        // parentLayout.removeView(nestedScrollView);
+        // parentLayout.removeView(newsRecycler);
         parentLayout.removeView(mainLayout);
         // parentLayout.removeView(imageCreditLayout);
 
-
-        // parentLayout.addView(nestedScrollView);
+        // parentLayout.addView(newsRecycler);
         parentLayout.addView(mainLayout);
         // parentLayout.addView(imageCreditLayout);
-
 
         parentLayout.setOrientation(LinearLayout.VERTICAL);
 
@@ -133,25 +201,52 @@ public class NTPUtil {
         LinearLayout.LayoutParams mainLayoutLayoutParams =
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0);
         mainLayoutLayoutParams.weight = 1f;
-        mainLayout.setLayoutParams(mainLayoutLayoutParams);      
+        mainLayout.setLayoutParams(mainLayoutLayoutParams);
 
-         NestedScrollView.LayoutParams nestedScrollViewLayoutParams =
-                new NestedScrollView.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-        // mainLayoutLayoutParams.weight = 1f;
-        // nestedScrollView.setLayoutParams(nestedScrollViewLayoutParams);
-
-        Log.d("BN", "dpHeight: "+dpHeight);
+        Log.d("BN", "ntputildpHeight: " + dpHeight);
+        Log.d("BN", "ntputildpHeight: " + dpToPx(context, dpHeight));
+        Log.d("BN", "ntputildpHeight: " + displayMetrics.heightPixels);
+        Log.d("BN", "ntputildpHeight: " + dpToPx(context, displayMetrics.heightPixels));
 
         LinearLayout.LayoutParams imageCreditLayoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        imageCreditLayoutParams.setMargins(0, dpToPx(context, (int) (dpHeight * 0.55)), 0, 0);
+
+        // int topMargin = dpToPx(context, (int) (dpHeight * 0.6));
+        // if (ConfigurationUtils.isLandscape(context)){
+        //     if (ConfigurationUtils.isTablet(context)){
+        //         topMargin = dpToPx(context, (int) (dpHeight * 0.5));
+        //     } else {
+        //         topMargin = dpToPx(context, (int) (dpHeight * 0.3));
+        //     }
+        // } else {
+        //     if (ConfigurationUtils.isTablet(context)){
+        //         topMargin = dpToPx(context, (int) (dpHeight * 0.7));
+        //     }
+        // }
+
+        int topMargin = correctImageCreditLayoutTopPosition(ntpImage);
+
+        imageCreditLayoutParams.setMargins(0, topMargin, 0, 0);
+        // imageCreditLayoutParams.setMargins(0, displayMetrics.heightPixels, 0, 0);
         imageCreditLayout.setLayoutParams(imageCreditLayoutParams);
 
-        Log.d("bn", "imageCreditLayout bottom:" + imageCreditLayout.getBottom());
+        // FrameLayout.LayoutParams recyclerParam = (FrameLayout.LayoutParams)
+        // newsRecycler.getLayoutParams(); recyclerParam.setMargins(0, imageCreditLayout.getBottom()
+        // + 20, 0, 40 ); newsRecycler.setLayoutParams(recyclerParam);
+        // newsRecycler.getLayoutManager().findViewByPosition(0).setLayoutParams(recyclerParam);
+        // Log.d("bn", "imageCreditLayout bottom:" + imageCreditLayout.getBottom());
 
-        LinearLayout.LayoutParams optinLayoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams optinLayoutParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         optinLayoutParams.setMargins(30, imageCreditLayout.getBottom(), 30, 500);
         optinLayout.setLayoutParams(optinLayoutParams);
+
+        View feedSpinner = (View) view.findViewById(R.id.feed_spinner);
+        FrameLayout.LayoutParams feedSpinnerParams =
+                (FrameLayout.LayoutParams) feedSpinner.getLayoutParams();
+        feedSpinnerParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        feedSpinnerParams.setMargins(0, 0, 0, dpToPx(context, 35));
+        feedSpinner.setLayoutParams(feedSpinnerParams);
 
         layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
         // layoutParams.setMargins(0, 400, 0, dpToPx(context, 5));

@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.ViewHolder> {
-
     private List<String> mData;
     private LayoutInflater mInflater;
     public RecycleItemClickListener mClickListener;
@@ -51,8 +50,8 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
     private LinearLayout.LayoutParams linearLayoutParams;
     private CopyOnWriteArrayList<NewsItem> mNewsItems;
 
-    private int cardPosition = 0;
-    private boolean isOptIn = false;
+    private int cardPosition;
+    private boolean isOptIn;
 
     private final int CARD_LAYOUT = 0;
     private final int BUTTON_LAYOUT = 1;
@@ -68,7 +67,6 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
 
     private ViewHolder mHolder;
     private final String TAG = "BN";
-
 
     public BraveNewsAdapter(Activity activity, CopyOnWriteArrayList<NewsItem> newsItems) {
         this.mInflater = LayoutInflater.from(activity);
@@ -96,7 +94,7 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        Log.d("BN", "onCreateViewHolder viewType:"+viewType);
+        Log.d("BN", "onCreateViewHolder viewType:" + viewType);
         view = mInflater.inflate(R.layout.brave_news_row, parent, false);
         mHolder = new ViewHolder(view);
 
@@ -106,9 +104,8 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     public void onBindViewHolder(@NonNull BraveNewsAdapter.ViewHolder holder, int position) {
-        Log.d("BN", "onBindViewHolder position:"+position);
-        Log.d("BN", "onBindViewHolder getItemViewType:"+holder.getItemViewType());
-
+        Log.d("BN", "onBindViewHolder position:" + position);
+        Log.d("BN", "onBindViewHolder getItemViewType:" + holder.getItemViewType());
 
         if (position >= getItemCount() - 10) {
             Log.d(TAG, "end");
@@ -116,26 +113,28 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
         }
         LinearLayout.LayoutParams params1;
 
-//        Log.d(TAG, "optedin:" + isOptIn);
+        //        Log.d(TAG, "optedin:" + isOptIn);
 
-//        if (!isOptIn) {
-//            createCard(WELCOME, position);
-//        } else
-//            {
-//            linearLayoutParams.setMargins(40, 0, 40, 40);
+        //        if (!isOptIn) {
+        //            createCard(WELCOME, position);
+        //        } else
+        //            {
+        //            linearLayoutParams.setMargins(40, 0, 40, 40);
         switch (cardPosition) {
-            case 1:
-                //TOP news
+            case 0:
+                // TOP news
                 Log.d(TAG, "creating TOP_NEWS");
-                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position), TOP_NEWS);
+                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position),
+                        TOP_NEWS);
                 break;
-            case 2:
+            case 1:
                 Log.d(TAG, "creating HEADLINE");
-                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position), HEADLINE);
+                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position),
+                        HEADLINE);
                 // Display Ad
                 break;
+            case 2:
             case 3:
-            case 4:
                 /* headline
 
                       Image
@@ -147,9 +146,10 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
                       Description
 
                 */
-                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position), HEADLINE);
+                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position),
+                        HEADLINE);
                 break;
-            case 5:
+            case 4:
                 /*headlinepair
 
                       Image      Image
@@ -161,22 +161,27 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
                    Description    Description
 
                  */
-                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position), HEADLINEPAIR);
+                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position),
+                        HEADLINEPAIR);
 
                 break;
-            case 6:
+            case 5:
                 // promoted content
-                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position), HEADLINE);
+                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position),
+                        HEADLINE);
+                break;
+            case 6:
+                // 3x Headlines
+                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position),
+                        THREE_ROWS_HEADLINES);
                 break;
             case 7:
-                // 3x Headlines
-                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position), THREE_ROWS_HEADLINES);
-                break;
             case 8:
-            case 9:
-                new CardBuilder(mHolder.linearLayout, mActivity, position, mNewsItems.get(position), DEALS);
+                new CardBuilder(
+                        mHolder.linearLayout, mActivity, position, mNewsItems.get(position), DEALS);
                 // headline
                 break;
+            case 9:
             case 10:
             case 11:
                 // 2 col headline
@@ -201,7 +206,7 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
                 // Offers card
                 break;
             case 19:
-                //Headline
+                // Headline
                 break;
             case 20:
                 // 2 col Headline
@@ -211,9 +216,7 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
             cardPosition = 0;
         }
         cardPosition++;
-        
     }
-
 
     @Override
     public int getItemCount() {
@@ -290,11 +293,11 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
             rowTop = new TableRow(mActivity);
             topText = new TextView(mActivity);
 
-
             itemView.setOnClickListener(this);
             linearLayout = itemView.findViewById(R.id.card_layout);
 
-            linearLayoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            linearLayoutParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             linearLayoutParams.setMargins(0, 40, 0, 40);
         }
 
@@ -303,8 +306,6 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
             if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
         }
     }
-
-
 
     public NewsItem getItem(int id) {
         return mNewsItems.get(id);
@@ -317,5 +318,4 @@ public class BraveNewsAdapter extends RecyclerView.Adapter<BraveNewsAdapter.View
 
         void onCloseClick(View view);
     }
-
 }

@@ -6,40 +6,39 @@
 
 package org.chromium.chrome.browser.settings;
 
-import android.os.Bundle;
 import android.content.SharedPreferences;
-import androidx.preference.Preference;
-import androidx.preference.SwitchPreference;
-import androidx.preference.CheckBoxPreference;
-import androidx.preference.PreferenceManager;
-import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.EditTextPreference;
-import androidx.annotation.NonNull;
-import android.widget.EditText;
+import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.TextView;
-import java.util.ArrayList;
 
-
-import androidx.preference.PreferenceScreen;
+import androidx.annotation.NonNull;
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.EditTextPreference;
+import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
+import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
-import org.chromium.base.Log;
-import org.chromium.chrome.browser.app.BraveActivity;
+import androidx.preference.PreferenceManager;
+import androidx.preference.PreferenceScreen;
+import androidx.preference.SwitchPreference;
 
 import org.chromium.base.ContextUtils;
+import org.chromium.base.Log;
+import org.chromium.chrome.R;
 import org.chromium.chrome.browser.BraveLaunchIntentDispatcher;
+import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.preferences.BravePreferenceKeys;
 import org.chromium.chrome.browser.settings.BravePreferenceFragment;
-import org.chromium.chrome.R;
-import org.chromium.components.browser_ui.settings.ChromeSwitchPreference;
 import org.chromium.components.browser_ui.settings.ChromeBaseCheckBoxPreference;
+import org.chromium.components.browser_ui.settings.ChromeSwitchPreference;
 import org.chromium.components.browser_ui.settings.SettingsUtils;
 
-public class BraveAddNewsSources extends BravePreferenceFragment
-        implements Preference.OnPreferenceChangeListener {
+import java.util.ArrayList;
 
+public class BraveAddNewsSources
+        extends BravePreferenceFragment implements Preference.OnPreferenceChangeListener {
     private static final String PREF_ADD_SOURCES = "news_source_1";
     private EditTextPreference addSource;
     private EditText mEditText;
@@ -60,8 +59,7 @@ public class BraveAddNewsSources extends BravePreferenceFragment
 
         addSource = (EditTextPreference) findPreference(PREF_ADD_SOURCES);
         addSource.setPositiveButtonText(R.string.search_title);
-	}
-    
+    }
 
     // @Override
     // public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -76,29 +74,30 @@ public class BraveAddNewsSources extends BravePreferenceFragment
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-
         String key = preference.getKey();
-        
+
         if (PREF_ADD_SOURCES.equals(key)) {
             Log.d("bn", "edittext:" + mEditText);
 
-            PreferenceManager manager =  getPreferenceManager();
-            PreferenceScreen sourcesScreen = manager.createPreferenceScreen(ContextUtils.getApplicationContext());
+            PreferenceManager manager = getPreferenceManager();
+            PreferenceScreen sourcesScreen =
+                    manager.createPreferenceScreen(ContextUtils.getApplicationContext());
             sourcesScreen.setTitle((String) newValue);
-            //fetch results from API
+            // fetch results from API
             // populate checkboxes
-            CheckBoxPreference source1 = new CheckBoxPreference(ContextUtils.getApplicationContext());
+            CheckBoxPreference source1 =
+                    new CheckBoxPreference(ContextUtils.getApplicationContext());
             source1.setTitle((String) newValue + " 1");
             source1.setChecked(true);
-            sourcesScreen.addPreference(source1);            
+            sourcesScreen.addPreference(source1);
 
-
-            CheckBoxPreference source2 = new CheckBoxPreference(ContextUtils.getApplicationContext());
+            CheckBoxPreference source2 =
+                    new CheckBoxPreference(ContextUtils.getApplicationContext());
             source2.setTitle((String) newValue + " 2");
             source2.setChecked(true);
             sourcesScreen.addPreference(source2);
 
-            //end fetch. finish the layout
+            // end fetch. finish the layout
 
             Preference button = new Preference(ContextUtils.getApplicationContext());
             button.setTitle("Add");
@@ -106,49 +105,48 @@ public class BraveAddNewsSources extends BravePreferenceFragment
             button.setSummary("Cool button stuff");
             button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
-                public boolean onPreferenceClick(Preference preference) { 
+                public boolean onPreferenceClick(Preference preference) {
                     Log.d("bn", "adding sources...");
 
-
-                    ArrayList<Preference> list = getPreferenceList(sourcesScreen, new ArrayList<Preference>());
+                    ArrayList<Preference> list =
+                            getPreferenceList(sourcesScreen, new ArrayList<Preference>());
                     for (Preference p : list) {
-                        if(p instanceof CheckBoxPreference) {
+                        if (p instanceof CheckBoxPreference) {
                             CheckBoxPreference pref = (CheckBoxPreference) p;
                             // Log.d("bn", "CheckBoxPreference: ");
-                            if (pref.isChecked()){
+                            if (pref.isChecked()) {
                                 Log.d("bn", "preference: " + p.getTitle());
                             }
                         }
                     }
                     // setPreferenceScreen(mainScreen);
                     setPreferencesFromResource(R.xml.brave_news_preferences, null);
-                     // SettingsUtils.addPreferencesFromResource(this, R.xml.brave_news_preferences);
-                    // inflateFromResource(ContextUtils.getApplicationContext(), R.layout.brave_news_preferences, getPreferenceScreen());
+                    // SettingsUtils.addPreferencesFromResource(this, R.xml.brave_news_preferences);
+                    // inflateFromResource(ContextUtils.getApplicationContext(),
+                    // R.layout.brave_news_preferences, getPreferenceScreen());
                     return true;
                 }
             });
             sourcesScreen.addPreference(button);
-            
+
             setPreferenceScreen(sourcesScreen);
             return true;
         }
         return true;
     }
 
-
     private ArrayList<Preference> getPreferenceList(Preference p, ArrayList<Preference> list) {
-        if( p instanceof PreferenceCategory || p instanceof PreferenceScreen) {
+        if (p instanceof PreferenceCategory || p instanceof PreferenceScreen) {
             PreferenceGroup pGroup = (PreferenceGroup) p;
             int pCount = pGroup.getPreferenceCount();
-            for(int i = 0; i < pCount; i++) {
-                Log.d("bn", "in for:"+pGroup.getPreference(i).getTitle());
+            for (int i = 0; i < pCount; i++) {
+                Log.d("bn", "in for:" + pGroup.getPreference(i).getTitle());
                 getPreferenceList(pGroup.getPreference(i), list); // recursive call
             }
         } else {
-            Log.d("bn", "in add p:"+p.getTitle());
+            Log.d("bn", "in add p:" + p.getTitle());
             list.add(p);
         }
         return list;
     }
 }
-

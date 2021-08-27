@@ -14,6 +14,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,16 +25,15 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ScrollView;
-import android.graphics.Bitmap;
+
 import androidx.annotation.NonNull;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentManager;
-import android.widget.FrameLayout;
 import androidx.fragment.app.FragmentTransaction;
 
 import org.json.JSONException;
-import android.graphics.drawable.BitmapDrawable;
 
 import org.chromium.base.ApplicationStatus;
 import org.chromium.base.BraveReflectionUtil;
@@ -67,6 +68,7 @@ import org.chromium.chrome.browser.browsing_data.BrowsingDataBridge;
 import org.chromium.chrome.browser.browsing_data.BrowsingDataType;
 import org.chromium.chrome.browser.browsing_data.ClearBrowsingDataFragmentAdvanced;
 import org.chromium.chrome.browser.browsing_data.TimePeriod;
+import org.chromium.chrome.browser.compositor.CompositorViewHolder;
 import org.chromium.chrome.browser.compositor.layouts.Layout;
 import org.chromium.chrome.browser.compositor.layouts.LayoutManagerChrome;
 import org.chromium.chrome.browser.compositor.layouts.LayoutManagerImpl;
@@ -79,6 +81,7 @@ import org.chromium.chrome.browser.informers.BraveAndroidSyncDisabledInformer;
 import org.chromium.chrome.browser.notifications.BraveSetDefaultBrowserNotificationService;
 import org.chromium.chrome.browser.notifications.retention.RetentionNotificationUtil;
 import org.chromium.chrome.browser.ntp.NewTabPage;
+import org.chromium.chrome.browser.ntp_background_images.util.NewTabPageListener;
 import org.chromium.chrome.browser.onboarding.OnboardingActivity;
 import org.chromium.chrome.browser.onboarding.OnboardingPrefManager;
 import org.chromium.chrome.browser.onboarding.v2.HighlightDialogFragment;
@@ -105,6 +108,7 @@ import org.chromium.chrome.browser.tabmodel.TabModelUtils;
 import org.chromium.chrome.browser.toolbar.top.BraveToolbarLayoutImpl;
 import org.chromium.chrome.browser.util.BraveDbUtil;
 import org.chromium.chrome.browser.util.BraveReferrer;
+import org.chromium.chrome.browser.util.ConfigurationUtils;
 import org.chromium.chrome.browser.util.PackageUtils;
 import org.chromium.chrome.browser.widget.crypto.binance.BinanceAccountBalance;
 import org.chromium.chrome.browser.widget.crypto.binance.BinanceWidgetManager;
@@ -115,8 +119,6 @@ import org.chromium.components.embedder_support.util.UrlUtilities;
 import org.chromium.components.search_engines.TemplateUrl;
 import org.chromium.components.user_prefs.UserPrefs;
 import org.chromium.ui.widget.Toast;
-import org.chromium.chrome.browser.compositor.CompositorViewHolder;
-import org.chromium.chrome.browser.ntp_background_images.util.NewTabPageListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -240,11 +242,21 @@ public abstract class BraveActivity<C extends ChromeActivityComponent>
         BraveSearchEngineUtils.initializeBraveSearchEngineStates(getTabModelSelector());
     }
 
+    public int getImageCreditLayoutBottom() {
+        ViewGroup imageCreditLayout = findViewById(R.id.image_credit_layout);
+        if (imageCreditLayout != null) {
+            return imageCreditLayout.getBottom();
+        }
+
+        return ConfigurationUtils.getDisplayMetrics(this).get("height");
+    }
+
     @Override
     public void onBrowsingDataCleared() {}
 
     @Override
     public void onResume() {
+        Log.d("bn", " onresume  ");
         super.onResume();
 
         Tab tab = getActivityTab();
@@ -433,55 +445,108 @@ public abstract class BraveActivity<C extends ChromeActivityComponent>
         checkSetDefaultBrowserModal();
         checkFingerPrintingOnUpgrade();
 
-        if (UrlUtilities.isNTPUrl(getActivityTab().getUrlString())){
-            Log.d("BN", "is NTP ");
+        Log.d("bn", "getActivityTab() :" + getActivityTab());
+        Log.d("bn", "getActivityTab().getUrlString() :" + getActivityTab().getUrlString());
+        Log.d("bn",
+                "getActivityTab() isNTPUrl :"
+                        + UrlUtilities.isNTPUrl(getActivityTab().getUrlString()));
+
+        // if it's new tab add the brave news settings bar to the layout
+        if (getActivityTab() != null && getActivityTab().getUrlString() != null
+                && UrlUtilities.isNTPUrl(getActivityTab().getUrlString())) {
             inflateNewsSettingsBar();
+        } else {
+            removeSetttingsBar();
         }
 
         Log.d("BN", "lifecycle BraveActivity finishNativeInitialization");
-        
+    }
+
+    public void removeSetttingsBar() {
+        CompositorViewHolder compositorView = findViewById(R.id.compositor_view_holder);
+        for (int index = 0; index < ((ViewGroup) compositorView).getChildCount(); index++) {
+            View nextChild = ((ViewGroup) compositorView).getChildAt(index);
+            Log.d("bn",
+                    "compositorViewchildren settings bar remove nextchild before remove:"
+                            + nextChild);
+        }
+        if (compositorView != null) {
+            View settingsBar = compositorView.getChildAt(2);
+            if (settingsBar.getId() == R.id.news_settings_bar) {
+                Log.d("bn", "settings bar remove:" + settingsBar.getId());
+                Log.d("bn", "settings bar remove:" + R.id.news_settings_bar);
+                Log.d("bn", "settings bar remove:" + R.layout.brave_news_settings_bar_layout);
+                // if (settingsBar.getId == "news_settings_bar"){
+                compositorView.removeView(settingsBar);
+                // }
+            }
+        }
     }
 
     private void inflateNewsSettingsBar() {
         // get the main compositor view that we'll use to manipulate the views
-        CompositorViewHolder compositorView =  findViewById(R.id.compositor_view_holder);
-        ViewGroup controlContainer =  findViewById(R.id.control_container);
-        Log.d("bn", "controlContainer: "+ controlContainer);
-        Log.d("bn", "controlContainer: "+ controlContainer.getBottom());
-        int[] coords = {0,0};
+        CompositorViewHolder compositorView = findViewById(R.id.compositor_view_holder);
+        ViewGroup controlContainer = findViewById(R.id.control_container);
+        Log.d("bn", "controlContainer: " + controlContainer);
+        Log.d("bn", "controlContainer: " + controlContainer.getBottom());
+        int[] coords = {0, 0};
         controlContainer.getLocationOnScreen(coords);
         int absoluteTop = coords[1];
         int absoluteBottom = coords[1] + controlContainer.getHeight();
-        Log.d("bn", "controlContainer absoluteBottom: "+ absoluteBottom);
-        Log.d("bn", "controlContainer controlContainer.getHeight(): "+ controlContainer.getHeight());
+        Log.d("bn", "controlContainer absoluteBottom: " + absoluteBottom);
+        Log.d("bn",
+                "controlContainer controlContainer.getHeight(): " + controlContainer.getHeight());
+
+        for (int index = 0; index < ((ViewGroup) compositorView).getChildCount(); index++) {
+            View nextChild = ((ViewGroup) compositorView).getChildAt(index);
+            Log.d("bn",
+                    "compositorViewchildren braveactivity inflate nextchild before add:"
+                            + nextChild);
+        }
 
         LayoutInflater inflater = LayoutInflater.from(this);
-        //inflate the settings bar layout
-        View inflatedLayout= inflater.inflate(R.layout.brave_news_settings_bar_layout, null);
+        // inflate the settings bar layout
+        View inflatedLayout = inflater.inflate(R.layout.brave_news_settings_bar_layout, null);
         // add the bar to the layout stack
         compositorView.addView(inflatedLayout, 2);
-        FrameLayout.LayoutParams inflatedLayoutParams = new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT, 100);
-        //position bellow the control_container element (nevigation bar) with 15dp compensation
+        inflatedLayout.setAlpha(0f);
+        FrameLayout.LayoutParams inflatedLayoutParams =
+                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 100);
+        // position bellow the control_container element (nevigation bar) with 15dp compensation
         inflatedLayoutParams.setMargins(0, controlContainer.getBottom() - 25, 0, 0);
         inflatedLayout.setLayoutParams(inflatedLayoutParams);
 
         compositorView.invalidate();
+
+        for (int index = 0; index < ((ViewGroup) compositorView).getChildCount(); index++) {
+            View nextChild = ((ViewGroup) compositorView).getChildAt(index);
+            Log.d("bn",
+                    "compositorViewchildren braveactivity inflate nextchild after add:"
+                            + nextChild);
+        }
     }
 
-
     public void setBackground(Bitmap bgWallpaper) {
-        CompositorViewHolder compositorView =  findViewById(R.id.compositor_view_holder);
+        CompositorViewHolder compositorView = findViewById(R.id.compositor_view_holder);
         // compositorView.setBackgroundResource(R.drawable.img2);
 
         ViewGroup root = (ViewGroup) compositorView.getChildAt(1);
         ScrollView scrollView = (ScrollView) root.getChildAt(0);
         scrollView.setId(View.generateViewId());
 
-        Log.d("BN", "compositor child at 0:"+compositorView.getChildAt(0));
-        Log.d("BN", "compositor child at 1:"+compositorView.getChildAt(1));
-        Log.d("BN", "compositor child at 1 scrollView :"+root.getChildAt(0));
-        Log.d("BN", "compositor child at  1 firtst id :"+scrollView.getId());
+        Log.d("BN", "compositor child at 0:" + compositorView.getChildAt(0));
+        Log.d("BN", "compositor child at 1:" + compositorView.getChildAt(1));
+        Log.d("BN", "compositor child at 1 scrollView :" + root.getChildAt(0));
+        Log.d("BN", "compositor child at  1 firtst id :" + scrollView.getId());
+
+        // int bwidth=bgWallpaper.getWidth();
+        // int bheight=bgWallpaper.getHeight();
+        // int swidth=scrollView.getWidth();
+        // int sheight=scrollView.getHeight();
+        // int new_width=swidth;
+        // int new_height = (int) Math.floor((double) bheight *( (double) new_width / (double)
+        // bwidth)); Bitmap newbitMap = Bitmap.createScaledBitmap(bgWallpaper,new_width,new_height,
+        // true);
 
         scrollView.setBackground(new BitmapDrawable(bgWallpaper));
     }
