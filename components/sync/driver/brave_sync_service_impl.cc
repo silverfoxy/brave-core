@@ -9,11 +9,16 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/metrics/histogram_functions.h"
 #include "base/strings/string_util.h"
 #include "brave/components/brave_sync/crypto/crypto.h"
 #include "brave/components/sync/driver/brave_sync_auth_manager.h"
 #include "brave/components/sync/driver/sync_service_impl_delegate.h"
 #include "components/prefs/pref_service.h"
+
+namespace {
+constexpr char kSyncEnambledP3AHistogramName[] = "Brave.Sync.Enabled";
+}
 
 namespace syncer {
 
@@ -40,9 +45,18 @@ BraveSyncServiceImpl::~BraveSyncServiceImpl() {
 
 void BraveSyncServiceImpl::Initialize() {
   SyncServiceImpl::Initialize();
+
   if (!brave_sync_prefs_.IsSyncV1Migrated()) {
     StopAndClear();
     brave_sync_prefs_.SetSyncV1Migrated(true);
+    return;
+  }
+
+  // P3A ping for existing sync users
+  if (user_settings_->IsFirstSetupComplete() &&
+      !brave_sync_prefs_.IsP3ASyncEnabledSent()) {
+    base::UmaHistogramExactLinear(kSyncEnambledP3AHistogramName, 1, 1);
+    brave_sync_prefs_.SetP3ASyncEnabledSent();
   }
 }
 
@@ -98,6 +112,9 @@ void BraveSyncServiceImpl::OnBraveSyncPrefsChanged(const std::string& path) {
       VLOG(1) << "Brave sync seed cleared";
       GetBraveSyncAuthManager()->ResetKeys();
     }
+    int p3a_value = (seed.empty()) ? 0 : 1;
+    base::UmaHistogramExactLinear(kSyncEnambledP3AHistogramName, p3a_value, 1);
+    brave_sync_prefs_.SetP3ASyncEnabledSent();
   }
 }
 

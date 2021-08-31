@@ -51,6 +51,9 @@ class Prefs {
   bool IsSyncMigrateNoticeDismissed() const;
   void SetDismissSyncMigrateNotice(bool is_dismissed);
 
+  bool IsP3ASyncEnabledSent() const;
+  void SetP3ASyncEnabledSent();
+
   void Clear();
 
  private:
