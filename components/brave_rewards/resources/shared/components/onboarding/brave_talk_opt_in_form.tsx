@@ -13,8 +13,8 @@ import { CheckCircleIcon } from './icons/check_circle_icon'
 
 import * as style from './brave_talk_opt_in_form.style'
 
-const termsOfServiceURL = 'https://brave.com/terms-of-use'
-const privacyPolicyURL = 'https://brave.com/privacy/browser'
+const termsOfServiceURL = 'https://basicattentiontoken.org/user-terms-of-service'
+const privacyPolicyURL = 'https://brave.com/privacy/#rewards'
 
 interface Props {
   rewardsEnabled: boolean

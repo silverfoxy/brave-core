@@ -49,7 +49,7 @@ void BraveAdsHost::RequestAdsEnabled(RequestAdsEnabledCallback callback) {
   const AdsService* ads_service = AdsServiceFactory::GetForProfile(profile_);
   brave_rewards::RewardsService* rewards_service =
       brave_rewards::RewardsServiceFactory::GetForProfile(profile_);
-  if (!ads_service || !rewards_service) {
+  if (!rewards_service || !ads_service || !ads_service->IsSupportedLocale()) {
     std::move(callback).Run(false);
     return;
   }
@@ -141,7 +141,12 @@ void BraveAdsHost::OnActionUIClosed(Browser* browser,
     return;
   }
 
-  std::move(callback_).Run(false);
+  const AdsService* ads_service = AdsServiceFactory::GetForProfile(profile_);
+  bool ads_enabled = false;
+  if (ads_service) {
+    ads_enabled = ads_service->IsEnabled();
+  }
+  std::move(callback_).Run(ads_enabled);
 }
 
 bool BraveAdsHost::ShowRewardsPopup(Browser* browser) {
