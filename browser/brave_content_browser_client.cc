@@ -411,6 +411,12 @@ void BraveContentBrowserClient::RegisterBrowserInterfaceBindersForFrame(
   chrome::internal::RegisterWebUIControllerInterfaceBinder<
       brave_news::mojom::BraveNewsController, BraveNewTabUI>(map);
 #endif
+
+// Brave News
+#if !defined(OS_ANDROID)
+  chrome::internal::RegisterWebUIControllerInterfaceBinder<
+      brave_news::mojom::BraveNewsController, BraveNewTabUI>(map);
+#endif
 }
 
 bool BraveContentBrowserClient::HandleExternalProtocol(
