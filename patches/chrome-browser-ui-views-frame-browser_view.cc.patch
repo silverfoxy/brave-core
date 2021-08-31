@@ -1,0 +1,13 @@
+diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/views/frame/browser_view.cc
+index b6796e77afeeb8ce9b25b82d2d3bffb59f935470..775327dd310c87ba9a5ae3d5188cbf460c7ca9db 100644
+--- a/chrome/browser/ui/views/frame/browser_view.cc
++++ b/chrome/browser/ui/views/frame/browser_view.cc
+@@ -259,7 +259,7 @@
+ #include "ui/views/win/scoped_fullscreen_visibility.h"
+ 
+ // To avoid conflicts with the macro from the Windows SDK...
+-#undef LoadAccelerators
++//#undef LoadAccelerators
+ #endif
+ 
+ #if BUILDFLAG(ENABLE_ONE_CLICK_SIGNIN)
