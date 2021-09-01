@@ -5,9 +5,14 @@
 
 #include "brave/components/brave_today/browser/brave_news_controller.h"
 
+
 #include "base/bind.h"
 #include "base/time/time.h"
+#include "base/values.h"
 #include "brave/common/pref_names.h" // TODO: move to this component
+#include "brave/components/brave_today/browser/urls.h"
+#include "brave/components/brave_today/browser/feed_parsing.h"
+#include "brave/components/brave_today/common/brave_news.mojom-forward.h"
 #include "brave/components/brave_today/common/brave_news.mojom.h"
 #include "brave/components/brave_today/common/brave_news.mojom-shared.h"
 #include "net/base/escape.h"
@@ -42,6 +47,7 @@ namespace {
 }  // namespace
 
 namespace brave_news {
+using std::move;
 
 BraveNewsController::BraveNewsController(PrefService* prefs,
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory)
@@ -57,6 +63,7 @@ BraveNewsController::BraveNewsController(PrefService* prefs,
   pref_change_registrar_.Add(kBraveTodayOptedIn,
       base::BindRepeating(&BraveNewsController::ConditionallyStartOrStopTimer,
           base::Unretained(this)));
+  // Monitor kBraveTodaySources and update feed / publisher cache
   // Start timer of updating feeds, if applicable
   ConditionallyStartOrStopTimer();
 }
@@ -101,7 +108,13 @@ void BraveNewsController::ClearPrefs(ClearPrefsCallback callback){
 void BraveNewsController::IsFeedUpdateAvailable(
     const std::string& displayed_feed_hash,
     IsFeedUpdateAvailableCallback callback){
-
+  // Get cached feed and compare hash
+  auto onFeed = base::BindOnce(
+    [](BraveNewsController* controller, IsFeedUpdateAvailableCallback callback,
+      std::string original_hash, mojom::FeedPtr feed) {
+        std::move(callback).Run(original_hash != feed->hash);
+    }, base::Unretained(this), std::move(callback), displayed_feed_hash);
+  GetOrFetchFeed(std::move(onFeed));
 }
 
 void BraveNewsController::CheckForFeedsUpdate() {
@@ -113,21 +126,99 @@ void BraveNewsController::CheckForSourcesUpdate() {
 }
 
 void BraveNewsController::GetOrFetchFeed(GetFeedCallback callback) {
-
+  if (!current_feed_.hash.empty()) {
+    auto clone = current_feed_.Clone();
+    std::move(callback).Run(std::move(clone));
+    return;
+  }
+  UpdateFeed(std::move(callback));
 }
 void BraveNewsController::GetOrFetchPublishers(GetPublishersCallback callback) {
-
+  // Use memory cache if available
+  if (!publishers_.empty()) {
+    ProvidePublishersClone(std::move(callback));
+    // std::move(callback).Run(publishers_);
+    return;
+  }
+  // TODO: make sure only one at a time
+  // fetching_feed_future_.wait();
+  // fetching_feed_future_.get()
+  // Re-check memory cache now that possible request is finished
+  // if (!publishers_.empty()) {
+  //   std::move(callback).Run(publishers_);
+  //   return;
+  // }
+  // Perform fetch
+  UpdatePublishers(std::move(callback));
 }
-void BraveNewsController::UpdateFeed() {
 
+void BraveNewsController::UpdateFeed(GetFeedCallback callback) {
+  GURL feed_url("https://" + brave_today::GetHostname() + "/brave-today/feed." + brave_today::GetRegionUrlPart() + "json");
+  auto onRequest = base::BindOnce(
+    [](BraveNewsController* controller, GetFeedCallback callback,
+      const int status, const std::string& body,
+      const base::flat_map<std::string, std::string>& headers) {
+        // TODO(petemill): handle bad response
+        // TODO(petemill): avoid callback hell
+        auto onPublishers = base::BindOnce(
+          [](BraveNewsController* controller, GetFeedCallback callback,
+            const std::string& body, Publishers publishers) {
+              LOG(ERROR) << "Got feed AND publishers!";
+              // TODO(petemill): Handle no publishers
+              // Reset feed data
+              // controller->current_feed_.featured_article = nullptr;
+              // controller->current_feed_.hash = "";
+              // controller->current_feed_.pages.clear();
+              ParseFeed(body, &publishers, &controller->current_feed_);
+              auto clone = controller->current_feed_.Clone();
+              std::move(callback).Run(std::move(clone));
+            }, base::Unretained(controller),
+              std::move(callback), std::move(body));
+        controller->GetOrFetchPublishers(std::move(onPublishers));
+    }, base::Unretained(this), std::move(callback));
+  api_request_helper_.Request("GET", feed_url, "", "", true,
+        std::move(onRequest));
 }
-void BraveNewsController::UpdatePublishers() {
 
+void BraveNewsController::UpdatePublishers(GetPublishersCallback callback) {
+  GURL sources_url("https://" + brave_today::GetHostname() + "/sources." + brave_today::GetRegionUrlPart() + "json");
+  auto onRequest = base::BindOnce(
+    [](BraveNewsController* controller, GetPublishersCallback callback,
+      const int status, const std::string& body,
+      const base::flat_map<std::string, std::string>& headers) {
+          // TODO(petemill): handle bad status or response
+          Publishers publisher_list;
+          ParsePublisherList(body, &publisher_list);
+          // Add user enabled statuses
+          const base::DictionaryValue* publisher_prefs =
+              controller->prefs_->GetDictionary(kBraveTodaySources);
+          for (auto kv : publisher_prefs->DictItems()) {
+            auto publisher_id = kv.first;
+            auto is_user_enabled = kv.second.GetIfBool();
+            if (publisher_list.contains(publisher_id)) {
+              // publisher_list.find(publisher_id)->second->user_enabled_status =
+              publisher_list[publisher_id]->user_enabled_status =
+                (is_user_enabled ? brave_news::mojom::UserEnabled::ENABLED
+                                : brave_news::mojom::UserEnabled::DISABLED);
+            }
+          }
+          // Set memory cache
+          controller->publishers_ = std::move(publisher_list);
+          controller->ProvidePublishersClone(std::move(callback));
+          // TODO: notify other callbacks / Release lock
+          // controller->fetching_sources_lock_.Release();
+          // std::move(callback).Run(controller->publishers_);
+    }, base::Unretained(this), std::move(callback));
+  api_request_helper_.Request("GET", sources_url, "", "", true,
+        std::move(onRequest));
 }
-Publishers BraveNewsController::BuildPublishers(
-    std::vector<mojom::PublisherPtr> publishers) {
-  Publishers result;
-  return result;
+
+void BraveNewsController::ProvidePublishersClone(GetPublishersCallback cb) {
+  Publishers clone;
+  for (auto const& kv : publishers_) {
+    clone.insert_or_assign(kv.first, kv.second->Clone());
+  }
+  std::move(cb).Run(std::move(clone));
 }
 
 void BraveNewsController::ConditionallyStartOrStopTimer() {

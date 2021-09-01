@@ -4,6 +4,8 @@ static_library("browser") {
   sources = [
     "brave_news_controller.cc",
     "brave_news_controller.h",
+    "feed_parsing.cc",
+    "feed_parsing.h",
     "urls.cc",
     "urls.h",
   ]
@@ -15,5 +17,9 @@ static_library("browser") {
     "//brave/components/brave_today/common:mojo_bindings",
     "//brave/components/l10n/browser",
     "//brave/components/l10n/common",
+    "//components/keyed_service/core",
+    "//components/prefs",
+    "//third_party/abseil-cpp:absl",
+    "//url"
   ]
 }

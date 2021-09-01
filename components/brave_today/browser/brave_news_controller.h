@@ -9,6 +9,7 @@
 #include <string>
 
 #include "base/containers/flat_map.h"
+// #include "base/synchronization/lock.h"
 #include "base/timer/timer.h"
 #include "brave/components/api_request_helper/api_request_helper.h"
 #include "brave/components/brave_today/common/brave_news.mojom-forward.h"
@@ -71,9 +72,10 @@ class BraveNewsController : public KeyedService, public mojom::BraveNewsControll
   void CheckForSourcesUpdate();
   void GetOrFetchFeed(GetFeedCallback callback);
   void GetOrFetchPublishers(GetPublishersCallback callback);
-  void UpdateFeed();
-  void UpdatePublishers();
-  Publishers BuildPublishers(std::vector<mojom::PublisherPtr> publishers);
+  void UpdateFeed(GetFeedCallback callback);
+  void UpdatePublishers(GetPublishersCallback callback);
+  void ProvidePublishersClone(GetPublishersCallback callback);
+  void ProvideFeedClone(GetFeedCallback callback);
 
   PrefService* prefs_;
   api_request_helper::APIRequestHelper api_request_helper_;
@@ -81,6 +83,12 @@ class BraveNewsController : public KeyedService, public mojom::BraveNewsControll
   PrefChangeRegistrar pref_change_registrar_;
   base::RepeatingTimer timer_feed_update_;
   base::RepeatingTimer timer_publishers_update_;
+
+  // base::Lock fetching_feed_lock_;
+  // std::future<bool> fetching_feed_future_;
+  // base::Lock fetching_sources_lock_;
+  // base::OnceCallbackList fetch_sources_callbacks_;
+  // base::OnceCallbackList fetch_feed_callbacks_;
 
   mojom::Feed current_feed_;
   Publishers publishers_;

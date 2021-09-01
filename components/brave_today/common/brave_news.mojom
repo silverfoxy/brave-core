@@ -6,7 +6,7 @@ import "url/mojom/url.mojom";
 
 // Items either have a padded or an unpadded image url
 union Image {
-  url.mojom.Url padding_image_url;
+  url.mojom.Url padded_image_url;
   url.mojom.Url image_url;
 };
 
@@ -46,17 +46,17 @@ union FeedItem {
 
 struct CategoryArticles {
   string category_name;
-  array<Article, 3> articles;
+  array<Article> articles; // Up to 3
 };
 
 struct PublisherArticles {
-  string publisher_name;
-  array<Article, 3> articles;
+  string publisher_id;
+  array<Article> articles; // Up to 3
 };
 
 struct Page {
   array<Article> articles;  // Up to 15
-  array<Article, 3> random_articles; // Up to 3
+  array<Article> random_articles; // Up to 3
   CategoryArticles? items_by_category;
   PublisherArticles? items_by_publisher;
   array<Deal>? deals; // Up to 3

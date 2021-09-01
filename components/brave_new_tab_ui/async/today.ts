@@ -8,6 +8,89 @@ import * as Background from '../../common/Background'
 import * as Actions from '../actions/today_actions'
 import { ApplicationState } from '../reducers'
 import { saveIsBraveTodayOptedIn } from '../api/preferences'
+import braveNewsController from '../api/brave_news/brave_news_proxy'
+
+// TODO(petemill): This is temporary until we remove original types
+function convertArticleFromMojom(item: any): BraveToday.Article {
+  try {
+    return {
+      content_type: 'article',
+      category: item.data.category_name,
+      publish_time: "2020-04-17 19:21:10 UTC", // TODO
+      title: item.data.title,
+      description: item.data.description,
+      url: item.data.url.url,
+      url_hash: item.data.url.url,
+      padded_img: item.data.image.paddedImageUrl.url,
+      img: item.data.image.paddedImageUrl.url,
+      publisher_id: item.data.publisherId,
+      publisher_name: item.data.publisherName,
+      score: item.data.score,
+      relative_time: 'about 1 hour ago' // TODO
+    }
+  }
+  catch (e) {
+    console.log('error converting item', item)
+    throw e
+  }
+}
+function convertDealFromMojom(item: any): BraveToday.Deal {
+  return {
+    ...convertArticleFromMojom(item),
+    content_type: 'product',
+    offers_category: item.offersCategory
+  }
+}
+function convertPromotedArticleFromMojom(item: any): BraveToday.PromotedArticle {
+  return {
+    ...convertArticleFromMojom(item),
+    content_type: 'brave_partner',
+    creative_instance_id: item.creativeInstanceId
+  }
+}
+function convertPageFromMojom(page: any): BraveToday.Page {
+  return {
+    articles: page.articles.map(convertArticleFromMojom),
+    randomArticles: page.randomArticles.map(convertArticleFromMojom),
+    itemsByCategory: page.itemsByCategory
+      ? {
+        categoryName: page.itemsByCategory.categoryName,
+        items: page.itemsByCategory.articles.map(convertArticleFromMojom)
+      }
+      : undefined,
+    itemsByPublisher: page.itemsByPublisher
+    ? {
+      name: page.itemsByPublisher.publisherId,
+      items: page.itemsByPublisher.articles.map(convertArticleFromMojom)
+    }
+    : undefined,
+    deals: page.deals ? page.deals.map(convertDealFromMojom) : undefined,
+    promotedArticle: page.promotedArticle ? convertPromotedArticleFromMojom(page.promotedArticle) : undefined
+  }
+}
+function convertFromMojomFeed(feed: any): BraveToday.Feed {
+  return {
+    hash: feed.hash,
+    featuredArticle: feed.featured_article ? convertArticleFromMojom(feed.featured_article) : undefined,
+    pages: feed.pages.map((page: any) => convertPageFromMojom(page)),
+  }
+}
+
+function convertFromMojomPublishers(mPublishers: any): BraveToday.Publishers {
+  const publishers = {}
+  for (const publisherId in mPublishers) {
+    let orig = mPublishers[publisherId]
+    publishers[publisherId] = {
+      publisher_id: publisherId,
+      publisher_name: orig.publisherName,
+      category: orig.categoryName,
+      enabled: orig.isEnabled,
+      user_enabled: orig.userEnabledStatus === 0 ? null : orig.userEnabledStatus === 1 ? true : false
+    }
+  }
+  return publishers
+}
+
 
 function storeInHistoryState (data: Object) {
   const oldHistoryState = (typeof history.state === 'object') ? history.state : {}
@@ -35,10 +118,13 @@ handler.on(
   async (store) => {
     try {
       const [{ feed }, { publishers }] = await Promise.all([
-        Background.send<Messages.GetFeedResponse>(MessageTypes.getFeed),
-        Background.send<Messages.GetPublishersResponse>(MessageTypes.getPublishers)
+        braveNewsController.getFeed(),
+        braveNewsController.getPublishers()
+        // Background.send<Messages.GetFeedResponse>(MessageTypes.getFeed),
+        // Background.send<Messages.GetPublishersResponse>(MessageTypes.getPublishers)
       ])
-      store.dispatch(Actions.dataReceived({ feed, publishers }))
+
+      store.dispatch(Actions.dataReceived({ feed: convertFromMojomFeed(feed), publishers: convertFromMojomPublishers(publishers) }))
     } catch (e) {
       console.error('error receiving feed', e)
       store.dispatch(Actions.errorGettingDataFromBackground(e))
@@ -55,8 +141,9 @@ handler.on(Actions.ensureSettingsData.getType(), async (store) => {
   if (state.today.publishers && Object.keys(state.today.publishers).length) {
     return
   }
-  const { publishers } = await Background.send<Messages.GetPublishersResponse>(MessageTypes.getPublishers)
-  store.dispatch(Actions.dataReceived({ publishers }))
+  // const { publishers } = await Background.send<Messages.GetPublishersResponse>(MessageTypes.getPublishers)
+  const { publishers } = await braveNewsController.getPublishers()
+  store.dispatch(Actions.dataReceived({ publishers: convertFromMojomPublishers(publishers) }))
 })
 
 handler.on<Actions.ReadFeedItemPayload>(Actions.readFeedItem.getType(), async (store, payload) => {
@@ -124,9 +211,10 @@ handler.on(Actions.checkForUpdate.getType(), async function (store) {
     return
   }
   const hash = state.today.feed.hash
-  const isUpdateAvailable = await Background.send<Messages.IsFeedUpdateAvailableResponse, Messages.IsFeedUpdateAvailablePayload>(MessageTypes.isFeedUpdateAvailable, {
-    hash
-  })
+  // const isUpdateAvailable = await Background.send<Messages.IsFeedUpdateAvailableResponse, Messages.IsFeedUpdateAvailablePayload>(MessageTypes.isFeedUpdateAvailable, {
+  //   hash
+  // })
+  const isUpdateAvailable: {isUpdateAvailable: boolean} = await braveNewsController.isFeedUpdateAvailable(hash)
   store.dispatch(Actions.isUpdateAvailable(isUpdateAvailable))
 })
 
