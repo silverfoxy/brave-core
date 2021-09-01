@@ -5,7 +5,7 @@ index 6eb60dddf6cd7fe5a87b2e463187db09a2b5d7cb..655437ba50c66ef39b0c59a0fcc3a955
 @@ -156,23 +156,25 @@ source_set("content_suggestions_scheduler_app_state_agent") {
    ]
  }
- 
+
 -source_set("credential_provider_migrator_app_agent") {
 -  configs += [ "//build/config/compiler:enable_arc" ]
 -  sources = [
@@ -43,7 +43,7 @@ index 6eb60dddf6cd7fe5a87b2e463187db09a2b5d7cb..655437ba50c66ef39b0c59a0fcc3a955
 +    ]
 +  }
  }
- 
+
  source_set("app_metrics_app_state_agent") {
 @@ -284,7 +286,6 @@ source_set("app_internal") {
      ":app_metrics_app_state_agent",
@@ -55,7 +55,7 @@ index 6eb60dddf6cd7fe5a87b2e463187db09a2b5d7cb..655437ba50c66ef39b0c59a0fcc3a955
      ":mode",
 @@ -406,7 +407,10 @@ source_set("app_internal") {
    ]
- 
+
    if (ios_enable_credential_provider_extension) {
 -    deps += [ "//ios/chrome/browser/credential_provider" ]
 +    deps += [
@@ -63,5 +63,5 @@ index 6eb60dddf6cd7fe5a87b2e463187db09a2b5d7cb..655437ba50c66ef39b0c59a0fcc3a955
 +      "//ios/chrome/browser/credential_provider"
 +    ]
    }
- 
+
    frameworks = [
