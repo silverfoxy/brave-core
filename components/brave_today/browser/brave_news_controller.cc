@@ -185,9 +185,9 @@ void BraveNewsController::UpdateFeed(GetFeedCallback callback) {
               LOG(ERROR) << "Got feed AND publishers!";
               // TODO(petemill): Handle no publishers
               // Reset feed data
-              // controller->current_feed_.featured_article = nullptr;
-              // controller->current_feed_.hash = "";
-              // controller->current_feed_.pages.clear();
+              controller->current_feed_.featured_article = nullptr;
+              controller->current_feed_.hash = "";
+              controller->current_feed_.pages.clear();
               ParseFeed(body, &publishers, &controller->current_feed_);
               auto clone = controller->current_feed_.Clone();
               std::move(callback).Run(std::move(clone));
@@ -215,7 +215,6 @@ void BraveNewsController::UpdatePublishers(GetPublishersCallback callback) {
             auto publisher_id = kv.first;
             auto is_user_enabled = kv.second.GetIfBool();
             if (publisher_list.contains(publisher_id)) {
-              // publisher_list.find(publisher_id)->second->user_enabled_status =
               publisher_list[publisher_id]->user_enabled_status =
                 (is_user_enabled ? brave_news::mojom::UserEnabled::ENABLED
                                 : brave_news::mojom::UserEnabled::DISABLED);

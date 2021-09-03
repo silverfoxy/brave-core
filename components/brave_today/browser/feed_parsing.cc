@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <iterator>
 #include <list>
+#include <random>
 #include <utility>
 #include <vector>
 
@@ -43,7 +44,7 @@ bool ParsePublisherList(const std::string& json,
     publisher->publisher_name = *publisher_raw.FindStringKey("publisher_name");
     publisher->category_name = *publisher_raw.FindStringKey("category");
     publisher->is_enabled = publisher_raw.FindBoolKey("enabled").value_or(true);
-    // (*publishers)[publisher->publisher_id] = std::move(publisher);
+    // TODO(petemill): Validate
     publishers->insert_or_assign(publisher->publisher_id, std::move(publisher));
   }
   return true;
@@ -94,8 +95,9 @@ bool ParseFeed(const std::string& json,
     feed->hash = std::to_string(hasher(feed->hash + url_raw));
     metadata->publisher_id = *feed_item_raw.FindStringKey("publisher_id");
     metadata->publisher_name = *feed_item_raw.FindStringKey("publisher_name");
-    metadata->score = feed_item_raw.FindIntKey("score").value_or(0);
+    metadata->score = feed_item_raw.FindDoubleKey("score").value_or(0.0);
     metadata->relative_time_description = "TODO relative time";
+    // TODO(petemill): validate
     // Detect type
     auto content_type = *feed_item_raw.FindStringKey("content_type");
     if (content_type == "brave_partner") {
@@ -113,14 +115,23 @@ bool ParseFeed(const std::string& json,
         item->data = std::move(metadata);
         articles.push_back(std::move(item));
     }
-    // Do not worry if unknown content_type is discovered, it could
+    // Do not error if unknown content_type is discovered, it could
     // be a future use.
   }
   LOG(ERROR) << "Got articles # " << articles.size();
   LOG(ERROR) << "Got deals # " << deals.size();
   LOG(ERROR) << "Got promoted articles # " << promoted_articles.size();
-
-  // TODO(petemill): weight items via history and sort by score
+  // TODO(petemill): weight items via history
+  // Sort by score
+  articles.sort([](mojom::ArticlePtr &a, mojom::ArticlePtr &b) {
+    return (a.get()->data->score < b.get()->data->score);
+  });
+  promoted_articles.sort([](mojom::PromotedArticlePtr &a, mojom::PromotedArticlePtr &b) {
+    return (a.get()->data->score < b.get()->data->score);
+  });
+  deals.sort([](mojom::DealPtr &a, mojom::DealPtr &b) {
+    return (a.get()->data->score < b.get()->data->score);
+  });
   // Get unique categories present with article counts
   std::map<std::string, std::int32_t> category_counts;
   for (auto const& article : articles) {
@@ -131,13 +142,20 @@ bool ParseFeed(const std::string& json,
     }
   }
   // Ordered by # of occurances
-  // TODO(petemill): sort map first
-  // Top News is always first category
-  std::vector<std::string> category_names_by_priority{"Top News"};
+  std::vector<std::string> category_names_by_priority;
   for (auto kv : category_counts) {
+    // Top News is always first category
     if (kv.first != "Top News")
       category_names_by_priority.emplace_back(kv.first);
   }
+  std::sort(category_names_by_priority.begin(),
+    category_names_by_priority.end(),
+    [category_counts](std::string &a, std::string &b) {
+      return (category_counts.at(a) < category_counts.at(b));
+    });
+  // Top News is always first category
+  category_names_by_priority.insert(
+      category_names_by_priority.begin(), "Top News");
   LOG(ERROR) << "Got categories # " << category_names_by_priority.size();
   // Get unique deals categories present
   std::map<std::string, std::int32_t> deal_category_counts;
@@ -149,30 +167,31 @@ bool ParseFeed(const std::string& json,
     }
   }
   // Ordered by # of occurances
-  // TODO(petemill): sort map first
   std::vector<std::string> deal_category_names_by_priority;
   for (auto kv : deal_category_counts) {
     deal_category_names_by_priority.emplace_back(kv.first);
   }
+  std::sort(deal_category_names_by_priority.begin(),
+      deal_category_names_by_priority.end(),
+      [deal_category_counts](std::string &a, std::string &b) {
+        return (deal_category_counts.at(a) < deal_category_counts.at(b));
+      });
   LOG(ERROR) << "Got deal categories # " << deal_category_names_by_priority.size();
-  // Get first headlines
-  std::list<mojom::ArticlePtr>::iterator it;
-  for (it = articles.begin(); it != articles.end(); it++) {
-    if (it->get()->data->category_name == "Top News") {
+  // Get first headline
+  std::list<mojom::ArticlePtr>::iterator featured_article_it;
+  for (featured_article_it = articles.begin();
+          featured_article_it != articles.end(); featured_article_it++) {
+    if (featured_article_it->get()->data->category_name == "Top News") {
       break;
     }
   }
-  std::list<mojom::ArticlePtr> first_headlines;
-  first_headlines.splice(first_headlines.begin(), articles, it);
-  if (first_headlines.size() > 0) {
-    // TODO(petemill): remove clone
-    auto article = (*first_headlines.begin())->Clone();
-    feed->featured_article = std::move(article);
-  }
+  auto item = *std::make_move_iterator(featured_article_it);
+  feed->featured_article = std::move(item);
+  articles.erase(featured_article_it);
   // Generate as many pages of content as possible
   // Make the pages
   int cur_page = 0;
-  int max_pages = 4000;
+  const int max_pages = 4000;
   auto category_it = category_names_by_priority.begin();
   auto deal_category_it = deal_category_names_by_priority.begin();
   auto promoted_it = promoted_articles.begin();
@@ -206,7 +225,7 @@ bool ParseFeed(const std::string& json,
       std::list<mojom::ArticlePtr> category_articles;
       std::list<mojom::ArticlePtr>::iterator it;
       for (it = articles.begin();
-             it != articles.end() && category_articles.size() <= 3;
+             it != articles.end() && category_articles.size() < 3;
              it++) {
         if (it->get()->data->category_name == page->items_by_category->category_name) {
           // Pass a copy of the iterator (via `it--`) so that we move
@@ -223,7 +242,7 @@ bool ParseFeed(const std::string& json,
     LOG(ERROR) << "collecting deals if there are any";
     // Collect deals
     std::list<mojom::DealPtr> page_deals;
-    auto desired_deal_count = 3u;
+    const auto desired_deal_count = 3u;
     if (deal_category_it != deal_category_names_by_priority.end()) {
       std::string deal_category_name = *deal_category_it;
       // Increment for next page
@@ -241,7 +260,6 @@ bool ParseFeed(const std::string& json,
     // Supplement with deals from other categories if we end up with fewer
     // than we want
     LOG(ERROR) << "hh";
-
     if (page_deals.size() < desired_deal_count) {
       auto supplemental_deal_count = std::min<uint>(
           desired_deal_count, deals.size());
@@ -268,7 +286,7 @@ bool ParseFeed(const std::string& json,
     std::string page_publisher_id;
     std::list<mojom::ArticlePtr> page_publisher_articles;
     std::list<mojom::ArticlePtr>::iterator it;
-    auto desired_publisher_group_count = 3u;
+    const auto desired_publisher_group_count = 3u;
     for (it = articles.begin();
             it != articles.end() &&
                 page_publisher_articles.size() < desired_publisher_group_count;
@@ -297,37 +315,40 @@ bool ParseFeed(const std::string& json,
     }
     // Promoted articles
     LOG(ERROR) << "promoted articles";
-    // if (promoted_articles.size()) {
     if (promoted_it != promoted_articles.end()) {
       LOG(ERROR) << "moving a promoted article";
       // Remove 1 item at the beginning
       auto i = std::make_move_iterator(promoted_it);
       auto item = *i;
       page->promoted_article = std::move(item);
-      // TODO(petemill): Clean up empty item in list and dont increment iterator
-      // promoted_articles.erase(promoted_articles.begin());
-      promoted_it++;
+      promoted_articles.erase(promoted_it);
+      promoted_it = promoted_articles.begin();
     }
     // Random articles
-    // TODO: randomize
     LOG(ERROR) << "random";
-    auto desired_random_articles_count = 3u;
-    std::list<mojom::ArticlePtr> random_articles;
+    const auto desired_random_articles_count = 3u;
     std::list<mojom::ArticlePtr>::iterator random_it;
+    std::vector<std::list<mojom::ArticlePtr>::iterator> matching_iterators;
+    base::Time time_limit = base::Time::Now() - base::TimeDelta::FromDays(2);
     for (random_it = articles.begin();
-            random_it != articles.end() &&
-                random_articles.size() < desired_random_articles_count;
+            random_it != articles.end();
             random_it++) {
-      // TODO(petemill): Only if article within last 48hrs
-      random_articles.splice(
-          random_articles.end(), articles, random_it--);
+      // Only if article within last 48hrs
+      if (random_it->get()->data->publish_time >= time_limit) {
+        matching_iterators.push_back(random_it);
+      }
     }
-    if (random_articles.size()) {
-      LOG(ERROR) << "random # " << random_articles.size();
-      page->random_articles.insert(
-          page->random_articles.end(),
-          std::make_move_iterator(random_articles.begin()),
-          std::make_move_iterator(random_articles.end()));
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(matching_iterators.begin(), matching_iterators.end(), g);
+    if (matching_iterators.size() > desired_random_articles_count) {
+      matching_iterators.resize(desired_random_articles_count);
+    }
+    for (auto & matching_iterator : matching_iterators) {
+      auto a = std::make_move_iterator(matching_iterator);
+      auto item = *a;
+      page->random_articles.push_back(std::move(item));
+      articles.erase(matching_iterator);
     }
     LOG(ERROR) << "done";
     feed->pages.push_back(std::move(page));

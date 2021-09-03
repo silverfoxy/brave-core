@@ -20,7 +20,7 @@ struct FeedItemMetadata {
   Image image;
   string publisher_id;
   string publisher_name;
-  int32 score;
+  double score;
   string relative_time_description;
 };
 
