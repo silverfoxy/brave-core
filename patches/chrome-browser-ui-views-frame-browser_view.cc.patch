@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/views/frame/browser_view.cc
-index b6796e77afeeb8ce9b25b82d2d3bffb59f935470..775327dd310c87ba9a5ae3d5188cbf460c7ca9db 100644
+index c7df34e9219b8592021f128a780490e03addc390..7bae583d69b3e3f9ac5ffed5dd4e535069e45c8f 100644
 --- a/chrome/browser/ui/views/frame/browser_view.cc
 +++ b/chrome/browser/ui/views/frame/browser_view.cc
-@@ -259,7 +259,7 @@
+@@ -261,7 +261,7 @@
  #include "ui/views/win/scoped_fullscreen_visibility.h"
  
  // To avoid conflicts with the macro from the Windows SDK...
