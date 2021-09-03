@@ -18,8 +18,7 @@ namespace brave_ads {
 
 class BraveAdsHostAndroid : public brave_ads::mojom::BraveAdsHost {
  public:
-  explicit BraveAdsHostAndroid(Profile* profile,
-                               content::WebContents* web_contents);
+  BraveAdsHostAndroid(Profile* profile, content::WebContents* web_contents);
   BraveAdsHostAndroid(const BraveAdsHostAndroid&) = delete;
   BraveAdsHostAndroid& operator=(const BraveAdsHostAndroid&) = delete;
   ~BraveAdsHostAndroid() override;

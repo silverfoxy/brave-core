@@ -5,11 +5,15 @@
 
 #include "base/path_service.h"
 #include "base/test/scoped_feature_list.h"
+#include "bat/ads/pref_names.h"
 #include "brave/browser/brave_ads/ads_service_factory.h"
+#include "brave/browser/brave_rewards/rewards_service_factory.h"
 #include "brave/common/brave_paths.h"
 #include "brave/components/brave_ads/browser/ads_service.h"
 #include "brave/components/brave_ads/common/features.h"
+#include "brave/components/brave_rewards/browser/rewards_service_impl.h"
 #include "brave/components/brave_rewards/browser/test/common/rewards_browsertest_context_util.h"
+#include "brave/components/brave_rewards/browser/test/common/rewards_browsertest_response.h"
 #include "brave/components/brave_rewards/browser/test/common/rewards_browsertest_util.h"
 #include "brave/components/brave_rewards/common/pref_names.h"
 #include "chrome/browser/profiles/profile.h"
@@ -18,6 +22,7 @@
 #include "chrome/test/base/ui_test_utils.h"
 #include "components/network_session_configurator/common/network_switches.h"
 #include "components/prefs/pref_service.h"
+#include "components/prefs/pref_test_utils.h"
 #include "content/public/browser/notification_service.h"
 #include "content/public/browser/notification_types.h"
 #include "content/public/test/browser_test.h"
@@ -32,21 +37,19 @@ namespace {
 constexpr char kAllowedDomain[] = "talk.brave.com";
 constexpr char kNotAllowedDomain[] = "brave.com";
 constexpr char kBraveRequestAdsEnabledExists[] =
-    "window.domAutomationController.send("
-    "  !!(window.chrome && window.chrome.braveRequestAdsEnabled)"
-    ")";
-constexpr char kBraveRequestAdsEnabled[] =
-    "let request_promise = window.chrome.braveRequestAdsEnabled()";
-constexpr char kResolveRequestAdsEnabledPromise[] =
-    "request_promise.then(function (enabled) {"
-    "  window.domAutomationController.send(enabled)"
-    "})";
-constexpr char kGetRequestAdsEnabledPromiseRejectReason[] =
-    "window.chrome.braveRequestAdsEnabled().then("
-    "    undefined,"
-    "    function (reason) {"
-    "        window.domAutomationController.send(reason)"
-    "    })";
+    "!!(window.chrome && window.chrome.braveRequestAdsEnabled)";
+constexpr char kBraveRequestAdsEnabled[] = R"(
+    request_promise = window.chrome.braveRequestAdsEnabled().then(
+        enabled => enabled
+    )
+)";
+constexpr char kResolveRequestAdsEnabledPromise[] = "request_promise";
+constexpr char kGetRequestAdsEnabledPromiseRejectReason[] = R"(
+    window.chrome.braveRequestAdsEnabled().then(
+        undefined,
+        reason => reason
+    )
+)";
 constexpr char kUserGestureRejectReason[] =
     "braveRequestAdsEnabled: API can only be initiated by a user gesture.";
 
@@ -68,8 +71,26 @@ class RequestAdsEnabledApiTestBase : public InProcessBrowserTest {
     base::FilePath test_data_dir;
     base::PathService::Get(brave::DIR_TEST_DATA, &test_data_dir);
     https_server_->ServeFilesFromDirectory(test_data_dir);
-
     ASSERT_TRUE(https_server_->Start());
+
+    auto* rewards_service = static_cast<brave_rewards::RewardsServiceImpl*>(
+        brave_rewards::RewardsServiceFactory::GetForProfile(
+            browser()->profile()));
+
+    base::ScopedAllowBlockingForTesting allow_blocking;
+    rewards_response_.LoadMocks();
+    rewards_service->ForTestingSetTestResponseCallback(
+        base::BindRepeating(&RequestAdsEnabledApiTestBase::GetTestResponse,
+                            base::Unretained(this)));
+    rewards_service->SetLedgerEnvForTesting();
+  }
+
+  void GetTestResponse(const std::string& url,
+                       int32_t method,
+                       int* response_status_code,
+                       std::string* response,
+                       base::flat_map<std::string, std::string>* headers) {
+    rewards_response_.Get(url, method, response_status_code, response);
   }
 
   void SetUpCommandLine(base::CommandLine* command_line) override {
@@ -102,7 +123,8 @@ class RequestAdsEnabledApiTestBase : public InProcessBrowserTest {
         content::NOTIFICATION_LOAD_COMPLETED_MAIN_FRAME,
         base::BindRepeating(check_load_is_rewards_panel, &popup_contents));
 
-    EXPECT_TRUE(ExecuteScript(contents, kBraveRequestAdsEnabled));
+    EXPECT_TRUE(content::ExecJs(contents, kBraveRequestAdsEnabled,
+                                content::EXECUTE_SCRIPT_NO_RESOLVE_PROMISES));
 
     // Wait for the popup to load
     popup_observer.Wait();
@@ -119,6 +141,7 @@ class RequestAdsEnabledApiTestBase : public InProcessBrowserTest {
 
  private:
   std::unique_ptr<net::EmbeddedTestServer> https_server_;
+  rewards_browsertest::RewardsBrowserTestResponse rewards_response_;
 };
 
 class RequestAdsEnabledApiTestEnabled : public RequestAdsEnabledApiTestBase {
@@ -139,61 +162,76 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled, AdsAlreadyEnabled) {
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  WaitForLoadStop(contents);
   EXPECT_EQ(url, contents->GetURL());
-  bool has_api;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kBraveRequestAdsEnabledExists, &has_api));
-  EXPECT_TRUE(has_api);
+  EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 
-  EXPECT_TRUE(ExecuteScript(contents, kBraveRequestAdsEnabled));
-
-  bool enabled;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kResolveRequestAdsEnabledPromise, &enabled));
-  EXPECT_TRUE(enabled);
+  EXPECT_TRUE(content::ExecJs(contents, kBraveRequestAdsEnabled,
+                              content::EXECUTE_SCRIPT_NO_RESOLVE_PROMISES));
+  EXPECT_EQ(true, content::EvalJs(contents, kResolveRequestAdsEnabledPromise));
 }
 
-IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled, PopupAccepted) {
+IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
+                       PrivateAdsPopupAccepted) {
   GURL url = https_server()->GetURL(kAllowedDomain, "/simple.html");
+
+  auto* rewards_service = static_cast<brave_rewards::RewardsServiceImpl*>(
+      brave_rewards::RewardsServiceFactory::GetForProfile(
+          browser()->profile()));
+
+  rewards_browsertest_util::StartProcess(rewards_service);
+  rewards_browsertest_util::CreateWallet(rewards_service);
+  rewards_browsertest_util::SetOnboardingBypassed(browser(), true);
 
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  WaitForLoadStop(contents);
   EXPECT_EQ(url, contents->GetURL());
-  bool has_api;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kBraveRequestAdsEnabledExists, &has_api));
-  EXPECT_TRUE(has_api);
+  EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 
   content::WebContents* popup_contents = OpenRequestAdsEnabledPopup(contents);
 
   rewards_browsertest_util::WaitForElementThenClick(
       popup_contents, "[data-test-id='rewards-onboarding-main-button']");
 
-  bool enabled;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kResolveRequestAdsEnabledPromise, &enabled));
-  EXPECT_TRUE(enabled);
+  EXPECT_EQ(true, content::EvalJs(contents, kResolveRequestAdsEnabledPromise));
+
+  // Wait for ads enabled.
+  WaitForPrefValue(browser()->profile()->GetPrefs(), ads::prefs::kEnabled,
+                   base::Value(true));
+}
+
+IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
+                       BraveRewardsPopupAccepted) {
+  GURL url = https_server()->GetURL(kAllowedDomain, "/simple.html");
+  rewards_browsertest_util::SetOnboardingBypassed(browser(), false);
+
+  ui_test_utils::NavigateToURL(browser(), url);
+  content::WebContents* contents =
+      browser()->tab_strip_model()->GetActiveWebContents();
+  EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
+
+  content::WebContents* popup_contents = OpenRequestAdsEnabledPopup(contents);
+
+  rewards_browsertest_util::WaitForElementThenClick(
+      popup_contents, "[data-test-id='rewards-onboarding-main-button']");
+
+  EXPECT_EQ(true, content::EvalJs(contents, kResolveRequestAdsEnabledPromise));
+
+  // Wait for ads enabled.
+  WaitForPrefValue(browser()->profile()->GetPrefs(), ads::prefs::kEnabled,
+                   base::Value(true));
 }
 
 IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
                        PopupClosedByNewTabOpen) {
-  browser()->profile()->GetPrefs()->SetBoolean(
-      brave_rewards::prefs::kAutoContributeEnabled, true);
-
   GURL url = https_server()->GetURL(kAllowedDomain, "/simple.html");
 
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  WaitForLoadStop(contents);
   EXPECT_EQ(url, contents->GetURL());
-  bool has_api;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kBraveRequestAdsEnabledExists, &has_api));
-  EXPECT_TRUE(has_api);
+  EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 
   OpenRequestAdsEnabledPopup(contents);
 
@@ -201,10 +239,7 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
       browser(), GURL("about:blank"), WindowOpenDisposition::NEW_FOREGROUND_TAB,
       ui_test_utils::BROWSER_TEST_WAIT_FOR_LOAD_STOP);
 
-  bool enabled;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kResolveRequestAdsEnabledPromise, &enabled));
-  EXPECT_FALSE(enabled);
+  EXPECT_EQ(false, content::EvalJs(contents, kResolveRequestAdsEnabledPromise));
 }
 
 IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
@@ -215,20 +250,12 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
 
   content::WebContents* contents =
       incognito_browser->tab_strip_model()->GetActiveWebContents();
-  WaitForLoadStop(contents);
   EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 
-  bool has_api;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kBraveRequestAdsEnabledExists, &has_api));
-  EXPECT_TRUE(has_api);
-
-  EXPECT_TRUE(ExecuteScript(contents, kBraveRequestAdsEnabled));
-
-  bool enabled;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kResolveRequestAdsEnabledPromise, &enabled));
-  EXPECT_FALSE(enabled);
+  EXPECT_TRUE(content::ExecJs(contents, kBraveRequestAdsEnabled,
+                              content::EXECUTE_SCRIPT_NO_RESOLVE_PROMISES));
+  EXPECT_EQ(false, content::EvalJs(contents, kResolveRequestAdsEnabledPromise));
 }
 
 IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
@@ -238,18 +265,14 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  WaitForLoadStop(contents);
   EXPECT_EQ(url, contents->GetURL());
 
-  bool has_api;
-  EXPECT_TRUE(ExecuteScriptWithoutUserGestureAndExtractBool(
-      contents, kBraveRequestAdsEnabledExists, &has_api));
-  EXPECT_TRUE(has_api);
+  EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists,
+                                  content::EXECUTE_SCRIPT_NO_USER_GESTURE));
 
-  std::string status;
-  EXPECT_TRUE(ExecuteScriptWithoutUserGestureAndExtractString(
-      contents, kGetRequestAdsEnabledPromiseRejectReason, &status));
-  EXPECT_EQ(status, kUserGestureRejectReason);
+  EXPECT_EQ(kUserGestureRejectReason,
+            content::EvalJs(contents, kGetRequestAdsEnabledPromiseRejectReason,
+                            content::EXECUTE_SCRIPT_NO_USER_GESTURE));
 }
 
 IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
@@ -259,13 +282,8 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  WaitForLoadStop(contents);
   EXPECT_EQ(url, contents->GetURL());
-
-  bool has_api;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kBraveRequestAdsEnabledExists, &has_api));
-  EXPECT_FALSE(has_api);
+  EXPECT_EQ(false, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 }
 
 class RequestAdsEnabledApiTestDisabled : public RequestAdsEnabledApiTestBase {
@@ -283,11 +301,6 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestDisabled,
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  WaitForLoadStop(contents);
   EXPECT_EQ(url, contents->GetURL());
-
-  bool has_api;
-  EXPECT_TRUE(ExecuteScriptAndExtractBool(
-      contents, kBraveRequestAdsEnabledExists, &has_api));
-  EXPECT_FALSE(has_api);
+  EXPECT_EQ(false, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 }
