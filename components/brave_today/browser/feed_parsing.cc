@@ -64,7 +64,6 @@ bool ParseFeed(const std::string& json,
   if (!records_v->GetAsList(&response_list)) {
     return false;
   }
-  // TODO(petemill): filter out non-image articles
   std::list<mojom::ArticlePtr> articles;
   std::list<mojom::PromotedArticlePtr> promoted_articles;
   std::list<mojom::DealPtr> deals;
@@ -79,15 +78,20 @@ bool ParseFeed(const std::string& json,
     metadata->title = *feed_item_raw.FindStringKey("title");
     metadata->description = *feed_item_raw.FindStringKey("description");
     // TODO(petemill): relative time
+    auto image_url_raw = *feed_item_raw.FindStringKey("padded_img");
+    // Filter out non-image articles
+    if (image_url_raw.empty()) {
+      continue;
+    }
+    auto image_url = mojom::Image::NewPaddedImageUrl(
+      GURL(image_url_raw));
+    metadata->image = std::move(image_url);
     auto url_raw = *feed_item_raw.FindStringKey("url");
     auto url = GURL(url_raw);
     metadata->url = std::move(url);
     // Get hash at this point since we have a flat list, and our algorithm
     // will only change sorting.
     feed->hash = std::to_string(hasher(feed->hash + url_raw));
-    auto image_url = mojom::Image::NewPaddedImageUrl(
-      GURL(*feed_item_raw.FindStringKey("padded_img")));
-    metadata->image = std::move(image_url);
     metadata->publisher_id = *feed_item_raw.FindStringKey("publisher_id");
     metadata->publisher_name = *feed_item_raw.FindStringKey("publisher_name");
     metadata->score = feed_item_raw.FindIntKey("score").value_or(0);

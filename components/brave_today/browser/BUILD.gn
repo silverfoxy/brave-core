@@ -13,6 +13,7 @@ static_library("browser") {
   deps = [
     "//base",
     "//brave/components/api_request_helper",
+    "//brave/components/brave_private_cdn",
     "//brave/components/brave_today/common",
     "//brave/components/brave_today/common:mojo_bindings",
     "//brave/components/l10n/browser",

@@ -102,7 +102,7 @@ struct Publisher {
 interface BraveNewsController {
   GetFeed() => (Feed feed);
   GetPublishers() => (map<string, Publisher> publishers);
-  GetImageData(url.mojom.Url padded_image_url) => (string data_url);
+  GetImageData(url.mojom.Url padded_image_url) => (array<uint8>? image_data);
   SetPublisherPref(string publisher_id, UserEnabled new_status);
   ClearPrefs() => (map<string, Publisher> publishers);
   IsFeedUpdateAvailable(string displayed_feed_hash) => (bool is_update_available);

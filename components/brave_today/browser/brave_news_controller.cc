@@ -10,6 +10,7 @@
 #include "base/time/time.h"
 #include "base/values.h"
 #include "brave/common/pref_names.h" // TODO: move to this component
+#include "brave/components/brave_private_cdn/private_cdn_helper.h"
 #include "brave/components/brave_today/browser/urls.h"
 #include "brave/components/brave_today/browser/feed_parsing.h"
 #include "brave/components/brave_today/common/brave_news.mojom-forward.h"
@@ -92,7 +93,25 @@ void BraveNewsController::GetPublishers(GetPublishersCallback callback){
 
 void BraveNewsController::GetImageData(const GURL& padded_image_url,
     GetImageDataCallback callback){
-
+  // Handler url download response
+  auto onPaddedImageResponse = base::BindOnce(
+    [](GetImageDataCallback callback, const int status, const std::string& body,
+          const base::flat_map<std::string, std::string>& headers) {
+      // Attempt to remove byte padding
+      base::StringPiece body_payload(body.data(), body.size());
+      if (status < 200 || status >= 300 ||
+          !brave::PrivateCdnHelper::GetInstance()->RemovePadding(
+                &body_payload)) {
+        // Byte padding removal failed
+        absl::optional<std::vector<uint8_t>> args;
+        std::move(callback).Run(std::move(args));
+      }
+      // Unpadding was successful, uint8Array will be easier to move over mojom
+      std::vector<uint8_t> image_bytes(body_payload.begin(), body_payload.end());
+      std::move(callback).Run(image_bytes);
+    }, std::move(callback));
+  api_request_helper_.Request("GET", padded_image_url, "", "", true,
+      std::move(onPaddedImageResponse));
 }
 
 void BraveNewsController::SetPublisherPref(
