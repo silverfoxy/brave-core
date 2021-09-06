@@ -76,6 +76,7 @@ import org.chromium.chrome.browser.informers.BraveAndroidSyncDisabledInformer;
 import org.chromium.chrome.browser.notifications.BraveSetDefaultBrowserNotificationService;
 import org.chromium.chrome.browser.notifications.retention.RetentionNotificationUtil;
 import org.chromium.chrome.browser.ntp.NewTabPage;
+import org.chromium.chrome.browser.onboarding.BraveTalkOptInPopupListener;
 import org.chromium.chrome.browser.onboarding.OnboardingActivity;
 import org.chromium.chrome.browser.onboarding.OnboardingPrefManager;
 import org.chromium.chrome.browser.onboarding.v2.HighlightDialogFragment;
@@ -683,6 +684,30 @@ public abstract class BraveActivity<C extends ChromeActivityComponent>
         assert layout != null;
         if (layout != null) {
             layout.openRewardsPanel();
+        }
+    }
+
+    public void openRewardsPanelWithQuickTour() {
+        BraveToolbarLayoutImpl layout = (BraveToolbarLayoutImpl) findViewById(R.id.toolbar);
+        assert layout != null;
+        if (layout != null) {
+            layout.openRewardsPanelWithQuickTour();
+        }
+    }
+
+    public void openBraveTalkOptInPopup(BraveTalkOptInPopupListener popupListener) {
+        BraveToolbarLayoutImpl layout = (BraveToolbarLayoutImpl) findViewById(R.id.toolbar);
+        assert layout != null;
+        if (layout != null) {
+            layout.openBraveTalkOptInPopup(popupListener);
+        }
+    }
+
+    public void onBraveTalkOptInPopupDismiss() {
+        BraveToolbarLayoutImpl layout = (BraveToolbarLayoutImpl) findViewById(R.id.toolbar);
+        assert layout != null;
+        if (layout != null) {
+            layout.onBraveTalkOptInPopupDismiss();
         }
     }
 

@@ -861,6 +861,11 @@ public class BraveRewardsPanelPopup implements BraveRewardsObserver, BraveReward
         BraveRewardsNativeWorker.getInstance().StartProcess();
     }
 
+    public void showWithQuickTour() {
+        this.showLikePopDownMenu(0, 0);
+        showBraveRewardsOnboarding(root, false);
+    }
+
     private void checkForRewardsOnboarding() {
         if (root != null && ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_REWARDS)
                 && BraveRewardsHelper.shouldShowBraveRewardsOnboardingOnce()) {
