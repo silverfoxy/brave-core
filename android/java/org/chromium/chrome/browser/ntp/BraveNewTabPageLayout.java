@@ -81,6 +81,11 @@ import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.brave_news.BraveNewsAdapter;
 import org.chromium.chrome.browser.brave_news.BraveNewsUtils;
 import org.chromium.chrome.browser.brave_news.models.NewsItem;
+import org.chromium.brave_news.mojom.Feed;
+import org.chromium.brave_news.mojom.Article;
+import org.chromium.brave_news.mojom.FeedItemMetadata;
+import org.chromium.brave_news.mojom.Publisher;
+
 import org.chromium.chrome.browser.brave_stats.BraveStatsUtil;
 import org.chromium.chrome.browser.compositor.CompositorViewHolder;
 import org.chromium.chrome.browser.compositor.layouts.OverviewModeBehavior;
@@ -116,7 +121,10 @@ import org.chromium.chrome.browser.profiles.Profile;
 
 import org.chromium.chrome.browser.settings.BraveNewsPreferences;
 import org.chromium.chrome.browser.settings.SettingsLauncherImpl;
-import org.chromium.chrome.browser.suggestions.tile.SiteSection;
+import org.chromium.brave_news.mojom.BraveNewsController;
+import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
+import org.chromium.mojo.bindings.ConnectionErrorHandler;
+import org.chromium.mojo.system.MojoException;
 import org.chromium.chrome.browser.suggestions.tile.TileGroup;
 import org.chromium.chrome.browser.sync.settings.BraveManageSyncSettings;
 import org.chromium.chrome.browser.tab.EmptyTabObserver;
@@ -152,7 +160,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class BraveNewTabPageLayout
         extends NewTabPageLayout implements CryptoWidgetBottomSheetDialogFragment
                                                     .CryptoWidgetBottomSheetDialogDismissListener,
-                                            BraveNewsAdapter.RecycleItemClickListener {
+                                            BraveNewsAdapter.RecycleItemClickListener,
+                                            ConnectionErrorHandler {
     private static final String TAG = "BraveNewTabPageView";
     private static final String BRAVE_BINANCE = "https://brave.com/binance/";
     private static final String BRAVE_REF_URL = "https://brave.com/r/";
@@ -217,6 +226,8 @@ public class BraveNewTabPageLayout
     private boolean isScrolled;
     private NTPImage ntpImageGlobal;
     private boolean settingsBarIsClickable;
+    private BraveNewsController mBraveNewsController;
+
 
     private CompositorViewHolder compositorView;
 
@@ -261,6 +272,7 @@ public class BraveNewTabPageLayout
         });
         showWidgetBasedOnOrder();
         NTPUtil.showBREBottomBanner(this);
+        InitBraveNewsController();
     }
 
     private void showFallBackNTPLayout() {
@@ -757,7 +769,38 @@ public class BraveNewTabPageLayout
                 @Override
                 public void run() {
                     Log.d("bravenews", "getting feed...");
+                    if (mBraveNewsController != null) {
+                        mBraveNewsController.getFeed((feed) -> {
+                            // Log.d("bn", "getfeed result: " + result);
+                            Log.d("bn", "getfeed feed: " + feed);
+                            Log.d("bn", "getfeed feed hash: " + feed.hash);
+                            Log.d("bn", "getfeed feed pages: " + feed.pages);
+                            Log.d("bn", "getfeed feed pages: " + feed.pages[0].articles[0].data);
+                            Log.d("bn", "getfeed feed pages: " + feed.pages[0].articles[0].data.categoryName);
+                            // Log.d("bn", "getfeed feed pages: " + feed.pages[0].articles[0].category_name);
 
+                            Log.d("bn", "getfeed feed featured_article: " + feed.featuredArticle);
+                            // Log.d("bn", "getfeed feed featured_article: " + feed.featured_article?);
+                            // Log.d("bn", "getfeed feed featured_article.data: " + feed.featured_article?.data);
+                            // Log.d("bn", "getfeed feed featured_article.data.category_name: " + feed.featured_article.data.category_name);
+                           
+                        });
+
+
+                        mBraveNewsController.getPublishers((publishers) -> {
+                            Log.d("bn", "getfeed publishers: " + publishers);
+                            for (Map.Entry<String,Publisher> entry : publishers.entrySet()) {
+                              String key = entry.getKey();
+                              Publisher value = entry.getValue();
+                              Log.d("bn", "getfeed publisher data key: " + key);
+                              Log.d("bn", "getfeed publisher data value: " + value);
+                              // do stuff
+                            }
+                            // HashMap<String, Float> map = new HashMap<String, Float>();
+                        });
+                    } else {
+                        Log.d("bn", " getfeed mBraveNewsController is null ");
+                    }
                     getFeed();
                     new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                         @Override
@@ -851,22 +894,7 @@ public class BraveNewTabPageLayout
                         Log.d("BN",
                                 "settings bar on onGlobalLayout: " + settingsBar
                                         + " isScrolled:" + isScrolled);
-                        // if (BraveActivity.getBraveActivity() != null
-                        //         && BraveActivity.getBraveActivity().getActivityTab() != null) {
-                        //     if
-                        //     (UrlUtilities.isNTPUrl(BraveActivity.getBraveActivity().getActivityTab().getUrlString())){
-                        //         Log.d("BN", "settings bar on onGlobalLayout is ntp:
-                        //         "+settingsBar);
-                        //     } else {
-                        //         Log.d("BN", "settings bar on onGlobalLayout is not ntp:
-                        //         "+settingsBar);
-                        //         BraveActivity.getBraveActivity().removeSetttingsBar();
-                        //     }
-                        //     Log.d("BN", "settings bar on onGlobalLayout is nothing ntp:
-                        //     "+settingsBar);
-                        // } else {
-                        //     Log.d("BN", "settings bar on onGlobalLayout is null");
-                        // }
+
                         if (settingsBar != null) {
                             if (!isScrolled) {
                                 settingsBar.setAlpha(0f);
@@ -988,6 +1016,19 @@ public class BraveNewTabPageLayout
                     @Override
                     public void run() {
                         Log.d("bravenews", "getting feed...");
+                        
+                        if (mBraveNewsController != null) {
+                            mBraveNewsController.getFeed((feed) -> {
+                                // Log.d("bn", "getfeed result: " + result);
+                                Log.d("bn", "getfeed feed: " + feed);
+                                Log.d("bn", "getfeed feed hash: " + feed.hash);
+                                // Log.d("bn", "getfeed feed featured_article: " + feed.featured_article);
+                                // Log.d("bn", "getfeed feed featured_article.data: " + feed.featured_article.data);
+                                // Log.d("bn", "getfeed feed featured_article.data.category_name: " + feed.featured_article.data.category_name);
+                            });
+                        } else {
+                            Log.d("bn", " getfeed mBraveNewsController is null ");
+                        }
                         getFeed();
                         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                             @Override
@@ -1291,17 +1332,20 @@ public class BraveNewTabPageLayout
                 Log.d("bn", "compositorViewchildren ntplayout nextchild before add:" + nextChild);
             }
 
-            // @TODO type check and null checks for all views added by getChild or similar
+            // @TODO section for settings bar. TO solve getActivityTab() issues
             try {
-                if (UrlUtilities.isNTPUrl(
-                            BraveActivity.getBraveActivity().getActivityTab().getUrlString())) {
-                    if (compositorView.getChildAt(2).getId() == R.id.news_settings_bar) {
-                        settingsBar = (LinearLayout) compositorView.getChildAt(2);
-                        Log.d("bn", "fetched settings bar :" + settingsBar.getId());
-                        Log.d("bn", "fetched settings bar :" + R.id.news_settings_bar);
-                        Log.d("bn",
-                                "fetched settings bar :" + R.layout.brave_news_settings_bar_layout);
-                        settingsBar.setAlpha(0f);
+                if (BraveActivity.getBraveActivity() != null 
+                        && BraveActivity.getBraveActivity().getActivityTab() != null) {
+                    if (UrlUtilities.isNTPUrl(
+                                BraveActivity.getBraveActivity().getActivityTab().getUrl().getSpec())) {
+                        if (compositorView.getChildAt(2).getId() == R.id.news_settings_bar) {
+                            settingsBar = (LinearLayout) compositorView.getChildAt(2);
+                            Log.d("bn", "fetched settings bar :" + settingsBar.getId());
+                            Log.d("bn", "fetched settings bar :" + R.id.news_settings_bar);
+                            Log.d("bn",
+                                    "fetched settings bar :" + R.layout.brave_news_settings_bar_layout);
+                            settingsBar.setAlpha(0f);
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -1624,4 +1668,21 @@ public class BraveNewTabPageLayout
         Log.d("bravenews",
                 "You clicked " + adapter.getItem(position) + " on row number " + position);
     }
+
+
+    @Override
+    public void onConnectionError(MojoException e) {
+        mBraveNewsController = null;
+        InitBraveNewsController();
+    }
+
+    private void InitBraveNewsController() {
+        if (mBraveNewsController != null) {
+            return;
+        }
+
+        mBraveNewsController =
+                BraveNewsControllerFactory.getInstance().getBraveNewsController(this);
+    }
+
 }

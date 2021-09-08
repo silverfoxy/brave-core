@@ -24,7 +24,12 @@ brave_chrome_java_deps = [
 
 if (brave_wallet_enabled) {
   brave_chrome_java_deps +=
-      [ "//brave/components/brave_wallet/common:mojom_java" ]
+    [ "//brave/components/brave_wallet/common:mojom_java" ]
+}
+
+if (brave_news_enabled) {
+  brave_chrome_java_deps +=
+    [ "//brave/components/brave_today/common:mojom_java" ]
 }
 
 brave_chrome_all_java_deps = [ "//brave/android/features/tab_ui:java" ]

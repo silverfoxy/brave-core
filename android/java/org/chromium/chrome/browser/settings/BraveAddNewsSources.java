@@ -35,17 +35,41 @@ import org.chromium.components.browser_ui.settings.ChromeBaseCheckBoxPreference;
 import org.chromium.components.browser_ui.settings.ChromeSwitchPreference;
 import org.chromium.components.browser_ui.settings.SettingsUtils;
 
+import org.chromium.brave_news.mojom.Publisher;
+import org.chromium.brave_news.mojom.BraveNewsController;
+import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
+import org.chromium.mojo.bindings.ConnectionErrorHandler;
+import org.chromium.mojo.system.MojoException;
+import java.util.Map;
+
 import java.util.ArrayList;
 
 public class BraveAddNewsSources
-        extends BravePreferenceFragment implements Preference.OnPreferenceChangeListener {
+        extends BravePreferenceFragment implements Preference.OnPreferenceChangeListener,
+        ConnectionErrorHandler {
     private static final String PREF_ADD_SOURCES = "news_source_1";
     private EditTextPreference addSource;
     private EditText mEditText;
     private PreferenceScreen mainScreen;
+    private BraveNewsController mBraveNewsController; 
 
     public static int getPreferenceSummary() {
         return BraveLaunchIntentDispatcher.useCustomTabs() ? R.string.text_on : R.string.text_off;
+    }
+
+    @Override
+    public void onConnectionError(MojoException e) {
+        mBraveNewsController = null;
+        InitBraveNewsController();
+    }
+
+    private void InitBraveNewsController() {
+        if (mBraveNewsController != null) {
+            return;
+        }
+
+        mBraveNewsController =
+                BraveNewsControllerFactory.getInstance().getBraveNewsController(this);
     }
 
     @Override
@@ -54,11 +78,28 @@ public class BraveAddNewsSources
         getActivity().setTitle(R.string.news_add_source);
         SettingsUtils.addPreferencesFromResource(this, R.xml.brave_news_sources);
         findPreference(PREF_ADD_SOURCES).setOnPreferenceChangeListener(this);
+        InitBraveNewsController();
 
         mainScreen = getPreferenceManager().getPreferenceScreen();
 
         addSource = (EditTextPreference) findPreference(PREF_ADD_SOURCES);
         addSource.setPositiveButtonText(R.string.search_title);
+
+        mBraveNewsController.getPublishers((publishers) -> {
+            Log.d("bn", "getfeed publishers: " + publishers);
+            for (Map.Entry<String,Publisher> entry : publishers.entrySet()) {
+                String key = entry.getKey();
+                Publisher publisher = entry.getValue();
+                Log.d("bn", "getfeed publisher data key: " + key);
+                Log.d("bn", "getfeed publisher data value: " + publisher);
+                CheckBoxPreference source = new CheckBoxPreference(ContextUtils.getApplicationContext());
+                // ChromeSwitchPreference source = new ChromeSwitchPreference(ContextUtils.getApplicationContext());
+                source.setTitle(publisher.publisherName);
+                mainScreen.addPreference(source);
+                
+              // do stuff
+            }
+        });
     }
 
     // @Override

@@ -33,4 +33,9 @@
         android:summary="@string/news_add_source"
         android:title="@string/news_add_source"/>
 
+    <PreferenceCategory
+        android:key="default_sources_section"
+        android:dependency="show_news"
+        android:title="@string/news_default_sources_section"/>
+
 </androidx.preference.PreferenceScreen>

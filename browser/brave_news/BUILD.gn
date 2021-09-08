@@ -1,3 +1,4 @@
+import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
 import("//brave/build/config.gni")
 
 source_set("brave_news") {
@@ -16,4 +17,11 @@ source_set("brave_news") {
     "//components/user_prefs",
     "//content/public/browser",
   ]
+  
+  if (is_android) {
+    sources += [
+      "android/brave_news_controller_factory_android.cc",
+    ]
+    deps += [ "//brave/build/android:jni_headers" ]
+  }
 }

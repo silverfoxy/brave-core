@@ -96,6 +96,7 @@ public class BraveNewsUtils {
         return newsItems;
     }
 
+
     private String loadJSONFromAsset(Context context) {
         listAssetFiles("", context);
         String json = null;

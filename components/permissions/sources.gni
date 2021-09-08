@@ -1,4 +1,5 @@
 import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
+import("//brave/components/brave_today/common/buildflags/buildflags.gni")
 
 brave_components_permissions_sources = [
   "//brave/components/permissions/brave_permission_manager.cc",
@@ -24,6 +25,7 @@ brave_components_permissions_sources = [
 brave_components_permissions_deps = [
   "//base",
   "//brave/components/brave_wallet/common/buildflags",
+  "//brave/components/brave_today/common/buildflags",
   "//brave/components/resources:strings_grit",
   "//components/content_settings/core/browser",
   "//components/content_settings/core/common",

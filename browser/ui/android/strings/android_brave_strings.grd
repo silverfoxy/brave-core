@@ -252,7 +252,10 @@ This file contains all "about" strings.  It is set to NOT be translated, in tran
       <message name="IDS_NEWS_TURN_ON_TEXT" desc="Text for turn on button text">
         Brave News is ad-supported with completely private and anonymized ...
       </message>
-      <message name="IDS_NEWS_YOUR_SOURCES_SECTION" desc="Text for your sources section">
+      <message name="IDS_NEWS_YOUR_SOURCES_SECTION" desc="Text for custom sources section">
+        Your sources
+      </message>
+      <message name="IDS_NEWS_DEFAULT_SOURCES_SECTION" desc="Text for the default sources section">
         Your sources
       </message>
       <message name="IDS_NEWS_ADD_SOURCE" desc="Text for add source button">

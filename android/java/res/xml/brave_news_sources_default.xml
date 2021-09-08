@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--* Copyright (c) 2021 The Brave Authors. All rights reserved.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:key="news_sources_default"
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
+
+	<Preference
+	    android:layout="@layout/custom_brave_news_sources_preference"/>
+</PreferenceScreen>
+
+

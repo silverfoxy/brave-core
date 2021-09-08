@@ -6,6 +6,7 @@
 import("//brave/browser/brave_ads/android/java_sources.gni")
 import("//brave/components/brave_referrals/buildflags/buildflags.gni")
 import("//brave/components/brave_wallet/common/buildflags/buildflags.gni")
+import("//brave/components/brave_today/common/buildflags/buildflags.gni")
 import("//brave/components/permissions/android/java_sources.gni")
 import("//brave/components/safetynet/java_sources.gni")
 import("//components/feed/features.gni")
@@ -47,6 +48,7 @@ brave_java_sources = [
   "../../brave/android/java/org/chromium/chrome/browser/brave_news/BraveNewsUtils.java",
   "../../brave/android/java/org/chromium/chrome/browser/brave_news/CardBuilder.java",
   "../../brave/android/java/org/chromium/chrome/browser/brave_news/models/NewsItem.java",
+  "../../brave/android/java/org/chromium/chrome/browser/brave_news/models/PublisherCategory.java",
   "../../brave/android/java/org/chromium/chrome/browser/brave_stats/BraveStatsBottomSheetDialogFragment.java",
   "../../brave/android/java/org/chromium/chrome/browser/brave_stats/BraveStatsUtil.java",
   "../../brave/android/java/org/chromium/chrome/browser/compositor/layouts/BraveLayoutManagerChrome.java",
@@ -94,7 +96,6 @@ brave_java_sources = [
   "../../brave/android/java/org/chromium/chrome/browser/notifications/retention/RetentionNotificationUtil.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/BraveNewTabPage.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/BraveNewTabPageLayout.java",
-  "../../brave/android/java/org/chromium/chrome/browser/ntp/CustomLayoutManager.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/IncognitoNewTabPageView.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/widget/NTPWidgetAdapter.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/widget/NTPWidgetItem.java",
@@ -242,6 +243,8 @@ brave_java_sources = [
   "../../brave/android/java/org/chromium/chrome/browser/widget/crypto/binance/ConvertAsset.java",
   "../../brave/android/java/org/chromium/chrome/browser/widget/crypto/binance/CryptoWidgetBottomSheetDialogFragment.java",
   "../../brave/android/java/org/chromium/chrome/browser/widget/crypto/binance/CryptoWidgetTabAdapter.java",
+  
+
 ]
 
 brave_java_sources += brave_ads_java_sources
@@ -289,6 +292,12 @@ if (brave_wallet_enabled) {
     "../../brave/android/java/org/chromium/chrome/browser/crypto_wallet/util/NavigationItem.java",
     "../../brave/android/java/org/chromium/chrome/browser/crypto_wallet/util/SmoothLineChartEquallySpaced.java",
     "../../brave/android/java/org/chromium/chrome/browser/crypto_wallet/util/Utils.java",
+  ]
+}
+
+if (brave_news_enabled) {
+  brave_java_sources += [
+    "../../brave/android/java/org/chromium/chrome/browser/brave_news/BraveNewsControllerFactory.java",
   ]
 }
 

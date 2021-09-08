@@ -18,6 +18,7 @@
 #include "brave/browser/search_engines/search_engine_tracker.h"
 #include "brave/components/brave_adaptive_captcha/buildflags/buildflags.h"
 #include "brave/components/brave_wallet/common/buildflags/buildflags.h"
+#include "brave/components/brave_today/common/buildflags/buildflags.h"
 #include "brave/components/greaselion/browser/buildflags/buildflags.h"
 #include "brave/components/ipfs/buildflags/buildflags.h"
 #include "brave/components/tor/buildflags/buildflags.h"
@@ -30,6 +31,10 @@
 #include "brave/browser/ui/bookmark/bookmark_prefs_service_factory.h"
 #else
 #include "brave/browser/ntp_background_images/android/ntp_background_images_bridge.h"
+#endif
+
+#if BUILDFLAG(BRAVE_NEWS_ENABLED)
+#include "brave/browser/brave_news/brave_news_controller_factory.h"
 #endif
 
 #if BUILDFLAG(BRAVE_WALLET_ENABLED)
@@ -81,7 +86,9 @@ void EnsureBrowserContextKeyedServiceFactoriesBuilt() {
   ntp_background_images::NTPBackgroundImagesBridgeFactory::GetInstance();
 #endif
 
-brave_news::BraveNewsControllerFactory::GetInstance();
+#if BUILDFLAG(BRAVE_NEWS_ENABLED)
+  brave_news::BraveNewsControllerFactory::GetInstance();
+#endif  
 
 #if BUILDFLAG(BRAVE_WALLET_ENABLED)
   brave_wallet::AssetRatioControllerFactory::GetInstance();

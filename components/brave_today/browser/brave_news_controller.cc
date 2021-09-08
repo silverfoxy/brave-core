@@ -20,6 +20,8 @@
 #include "brave/components/brave_today/common/brave_news.mojom-shared.h"
 #include "brave/components/weekly_storage/weekly_storage.h"
 #include "components/history/core/browser/history_service.h"
+#include "components/history/core/browser/history_types.h"
+#include "components/prefs/scoped_user_pref_update.h"
 #include "net/base/escape.h"
 #include "net/base/load_flags.h"
 #include "net/base/url_util.h"
@@ -48,11 +50,9 @@ namespace {
       }
     )");
 }
-
 }  // namespace
 
 namespace brave_news {
-using std::move;
 
 BraveNewsController::BraveNewsController(PrefService* prefs,
     brave_ads::AdsService* ads_service,
@@ -91,6 +91,10 @@ void BraveNewsController::Bind(
   receivers_.Add(this, std::move(receiver));
 }
 
+void BraveNewsController::ClearHistory() {
+  // Clear history once we actually store feed cache somewhere
+}
+
 void BraveNewsController::GetFeed(GetFeedCallback callback) {
   GetOrFetchFeed(std::move(callback));
 }
@@ -125,11 +129,22 @@ void BraveNewsController::GetImageData(const GURL& padded_image_url,
 void BraveNewsController::SetPublisherPref(
     const std::string& publisher_id,
     mojom::UserEnabled new_status){
-
+  DictionaryPrefUpdate update(prefs_, kBraveTodaySources);
+  if (new_status == mojom::UserEnabled::NOT_MODIFIED) {
+    update->RemoveKey(publisher_id);
+  } else {
+    update->SetBoolean(publisher_id,
+        (new_status == mojom::UserEnabled::ENABLED));
+  }
+  LOG(ERROR) << "set publisher pref";
+  // Force an update of publishers and feed to include or ignore
+  // content from the affected publisher.
+  PublishersIsStale();
 }
 
-void BraveNewsController::ClearPrefs(ClearPrefsCallback callback){
-
+void BraveNewsController::ClearPrefs(){
+  DictionaryPrefUpdate update(prefs_, kBraveTodaySources);
+  update->DictClear();
 }
 
 void BraveNewsController::IsFeedUpdateAvailable(
@@ -315,6 +330,24 @@ void BraveNewsController::CheckForSourcesUpdate() {
 
 }
 
+void BraveNewsController::PublishersIsStale() {
+  Publishers new_publishers;
+  publishers_ = std::move(new_publishers);
+  FeedIsStale();
+}
+
+void BraveNewsController::FeedIsStale() {
+  ResetFeed();
+  GetFeedCallback do_nothing = base::BindOnce([](mojom::FeedPtr feed){});
+  GetOrFetchFeed(std::move(do_nothing));
+}
+
+void BraveNewsController::ResetFeed() {
+  current_feed_.featured_item = nullptr;
+  current_feed_.hash = "";
+  current_feed_.pages.clear();
+}
+
 void BraveNewsController::GetOrFetchFeed(GetFeedCallback callback) {
   if (!current_feed_.hash.empty()) {
     auto clone = current_feed_.Clone();
@@ -355,13 +388,30 @@ void BraveNewsController::UpdateFeed(GetFeedCallback callback) {
           [](BraveNewsController* controller, GetFeedCallback callback,
             const std::string& body, Publishers publishers) {
               // TODO(petemill): Handle no publishers
-              // Reset feed data
-              controller->current_feed_.featured_article = nullptr;
-              controller->current_feed_.hash = "";
-              controller->current_feed_.pages.clear();
-              ParseFeed(body, &publishers, &controller->current_feed_);
-              auto clone = controller->current_feed_.Clone();
-              std::move(callback).Run(std::move(clone));
+              // Get history hosts
+              // TODO(petemill): avoid callback hell
+              auto onHistory = base::BindOnce(
+                [](BraveNewsController* controller, GetFeedCallback callback,
+                    const std::string& body, Publishers publishers,
+                    history::QueryResults results) {
+                  std::unordered_set<std::string> history_hosts;
+                  for (const auto &item : results) {
+                    auto host = item.url().host();
+                    history_hosts.insert(host);
+                  }
+                  VLOG(1) << "history hosts # " << history_hosts.size();
+                  controller->ResetFeed();
+                  ParseFeed(body, &publishers, history_hosts, &controller->current_feed_);
+                  auto clone = controller->current_feed_.Clone();
+                  std::move(callback).Run(std::move(clone));
+                }, base::Unretained(controller), std::move(callback),
+                    std::move(body), std::move(publishers));
+              history::QueryOptions options;
+              options.max_count = 2000;
+              options.SetRecentDayRange(14);
+              controller->history_service_->QueryHistory(
+                  std::u16string(), options, std::move(onHistory),
+                  &controller->task_tracker_);
             }, base::Unretained(controller),
               std::move(callback), std::move(body));
         controller->GetOrFetchPublishers(std::move(onPublishers));
@@ -386,10 +436,14 @@ void BraveNewsController::UpdatePublishers(GetPublishersCallback callback) {
           for (auto kv : publisher_prefs->DictItems()) {
             auto publisher_id = kv.first;
             auto is_user_enabled = kv.second.GetIfBool();
-            if (publisher_list.contains(publisher_id)) {
+            if (publisher_list.contains(publisher_id) && is_user_enabled.has_value()) {
               publisher_list[publisher_id]->user_enabled_status =
-                (is_user_enabled ? brave_news::mojom::UserEnabled::ENABLED
+                (is_user_enabled.value() ? brave_news::mojom::UserEnabled::ENABLED
                                 : brave_news::mojom::UserEnabled::DISABLED);
+
+            } else {
+              VLOG(1) << "Publisher list did not contain publisher found in"
+              "user prefs: " << publisher_id;
             }
           }
           // Set memory cache

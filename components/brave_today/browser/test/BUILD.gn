@@ -4,10 +4,12 @@
 # you can obtain one at http://mozilla.org/MPL/2.0/.
 
 import("//brave/build/config.gni")
+import("//brave/components/brave_today/common/buildflags/buildflags.gni")
 import("//testing/test.gni")
 
 source_set("brave_news_unit_tests") {
   testonly = true
+  if (brave_news_enabled) {
     sources = [
       "//brave/components/brave_today/browser/feed_parsing_unittest.cc",
     ]
@@ -16,11 +18,12 @@ source_set("brave_news_unit_tests") {
       "//base/test:test_support",
       "//brave/components/brave_today/browser",
       "//brave/components/brave_today/common",
-      "//brave/components/brave_today/common:mojo_bindings",
+      "//brave/components/brave_today/common:mojom",
       "//chrome/browser",
       "//chrome/test:test_support",
       "//content/test:test_support",
       "//testing/gtest",
       "//url",
     ]
+  }
 }

@@ -715,9 +715,10 @@ brave_java_resources = [
   "java/res/layout/activity_account_details_with_qr.xml",
   "java/res/layout/activity_add_account.xml",
 
-  "java/res/layout/activity_crypto_wallet.xml",
   "java/res/layout/brave_news_settings_bar_layout.xml",
   "java/res/layout/brave_news_row.xml",
+  "java/res/layout/custom_brave_news_sources_preference.xml",
+
 
   "java/res/layout/activity_asset_detail.xml",
   "java/res/layout/activity_brave_wallet.xml",
@@ -866,6 +867,7 @@ brave_java_resources = [
   "java/res/xml/brave_main_preferences.xml",
   "java/res/xml/brave_news_preferences.xml",
   "java/res/xml/brave_news_sources.xml",
+  "java/res/xml/brave_news_sources_default.xml",
   "java/res/xml/brave_privacy_preferences.xml",
   "java/res/xml/brave_rewards_debug_preferences.xml",
   "java/res/xml/brave_rewards_preferences.xml",

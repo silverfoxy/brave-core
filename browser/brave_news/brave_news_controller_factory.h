@@ -11,15 +11,23 @@
 #include "components/keyed_service/content/browser_context_keyed_service_factory.h"
 #include "components/keyed_service/core/keyed_service.h"
 #include "content/public/browser/browser_context.h"
+#include "mojo/public/cpp/bindings/pending_remote.h"
 
 namespace brave_news {
 
 class BraveNewsController;
 
 class BraveNewsControllerFactory : public BrowserContextKeyedServiceFactory {
+ // public:
+  // static BraveNewsController* GetForContext(
+  //     content::BrowserContext* context);
+  // static mojo::PendingRemote<mojom::BraveNewsController> GetForContext(
+  //   content::BrowserContext* context);
  public:
-  static BraveNewsController* GetForContext(
-      content::BrowserContext* context);
+  // static BraveNewsController* GetForContext(
+  //     content::BrowserContext* context);
+  static mojo::PendingRemote<mojom::BraveNewsController> GetForContext(
+    content::BrowserContext* context);  
   static BraveNewsControllerFactory* GetInstance();
 
  private:
