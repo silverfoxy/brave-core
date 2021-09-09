@@ -11,6 +11,7 @@
 #include <iterator>
 #include <list>
 #include <random>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -20,6 +21,7 @@
 #include "base/strings/stringprintf.h"
 #include "base/time/time.h"
 #include "brave/components/brave_today/common/brave_news.mojom-forward.h"
+#include "brave/components/brave_today/common/brave_news.mojom-shared.h"
 #include "brave/components/brave_today/common/brave_news.mojom.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 #include "ui/base/l10n/time_format.h"
@@ -54,6 +56,7 @@ bool ParsePublisherList(const std::string& json,
 
 bool ParseFeed(const std::string& json,
                         Publishers* publishers,
+                        std::unordered_set<std::string>& history_hosts,
                         mojom::Feed* feed) {
   base::JSONReader::ValueWithError value_with_error =
       base::JSONReader::ReadAndReturnValueWithError(
@@ -72,6 +75,12 @@ bool ParseFeed(const std::string& json,
   std::list<mojom::DealPtr> deals;
   std::hash<std::string> hasher;
   for (const base::Value& feed_item_raw : response_list->GetList()) {
+    auto url_raw = *feed_item_raw.FindStringKey("url");
+    if (url_raw.empty()) {
+      VLOG(1) << "Found feed item with missing url. Title: "
+          << *feed_item_raw.FindStringKey("title");
+      continue;
+    }
     auto image_url_raw = *feed_item_raw.FindStringKey("padded_img");
     // Filter out non-image articles
     if (image_url_raw.empty()) {
@@ -84,17 +93,24 @@ bool ParseFeed(const std::string& json,
     metadata->description = *feed_item_raw.FindStringKey("description");
     metadata->publisher_id = *feed_item_raw.FindStringKey("publisher_id");
     metadata->publisher_name = *feed_item_raw.FindStringKey("publisher_name");
-    metadata->score = feed_item_raw.FindDoubleKey("score").value_or(0.0);
     auto image_url = mojom::Image::NewPaddedImageUrl(
       GURL(image_url_raw));
     metadata->image = std::move(image_url);
-    auto url_raw = *feed_item_raw.FindStringKey("url");
     auto url = GURL(url_raw);
+    if (url.is_empty() || !url.has_host()) {
+      VLOG(1) << "Could not parse item url: " << url_raw;
+      continue;
+    }
     metadata->url = std::move(url);
+    // Further weight according to history
+    metadata->score = feed_item_raw.FindDoubleKey("score").value_or(0.0);
+    if (history_hosts.find(metadata->url.host()) != history_hosts.end()) {
+      metadata->score-=5;
+    }
     // Extract time
     const char* publish_time_raw = (*feed_item_raw.FindStringKey("publish_time")).c_str();
     if (!base::Time::FromUTCString(publish_time_raw, &metadata->publish_time)) {
-      LOG(ERROR) << "bad time string for feed item: " << publish_time_raw;
+      VLOG(1) << "bad time string for feed item: " << publish_time_raw;
     } else {
       // Successful, get language-specific relative time
       base::TimeDelta relative_time_delta = base::Time::Now() - metadata->publish_time;
@@ -129,10 +145,9 @@ bool ParseFeed(const std::string& json,
     // Do not error if unknown content_type is discovered, it could
     // be a future use.
   }
-  LOG(ERROR) << "Got articles # " << articles.size();
-  LOG(ERROR) << "Got deals # " << deals.size();
-  LOG(ERROR) << "Got promoted articles # " << promoted_articles.size();
-  // TODO(petemill): weight items via history
+  VLOG(1) << "Got articles # " << articles.size();
+  VLOG(1) << "Got deals # " << deals.size();
+  VLOG(1) << "Got promoted articles # " << promoted_articles.size();
   // Sort by score
   articles.sort([](mojom::ArticlePtr &a, mojom::ArticlePtr &b) {
     return (a.get()->data->score < b.get()->data->score);
@@ -167,7 +182,7 @@ bool ParseFeed(const std::string& json,
   // Top News is always first category
   category_names_by_priority.insert(
       category_names_by_priority.begin(), "Top News");
-  LOG(ERROR) << "Got categories # " << category_names_by_priority.size();
+  VLOG(1) << "Got categories # " << category_names_by_priority.size();
   // Get unique deals categories present
   std::map<std::string, std::int32_t> deal_category_counts;
   for (auto const& deal : deals) {
@@ -187,7 +202,7 @@ bool ParseFeed(const std::string& json,
       [deal_category_counts](std::string &a, std::string &b) {
         return (deal_category_counts.at(a) < deal_category_counts.at(b));
       });
-  LOG(ERROR) << "Got deal categories # " << deal_category_names_by_priority.size();
+  VLOG(1) << "Got deal categories # " << deal_category_names_by_priority.size();
   // Get first headline
   std::list<mojom::ArticlePtr>::iterator featured_article_it;
   for (featured_article_it = articles.begin();
@@ -209,7 +224,6 @@ bool ParseFeed(const std::string& json,
   auto deal_category_it = deal_category_names_by_priority.begin();
   auto promoted_it = promoted_articles.begin();
   while (cur_page++ < max_pages) {
-    LOG(ERROR) << "Making page # " << cur_page;
     auto page = mojom::Page::New();
     // Collect headlines
     // TODO(petemill): Use the CardType type and PageContentOrder array
@@ -223,7 +237,6 @@ bool ParseFeed(const std::string& json,
     headlines.splice(headlines.begin(), articles, articles.begin(), end);
     if (headlines.size() == 0) {
       // No more pages of content
-      LOG(ERROR) << "no more pages";
       break;
     }
     page->articles.insert(page->articles.end(),
@@ -234,7 +247,6 @@ bool ParseFeed(const std::string& json,
       std::string category_name = *category_it;
       page->items_by_category = mojom::CategoryArticles::New();
       page->items_by_category->category_name = category_name;
-      LOG(ERROR) << "making page for category: " << page->items_by_category->category_name << " " << category_name;
       std::list<mojom::ArticlePtr> category_articles;
       std::list<mojom::ArticlePtr>::iterator it;
       for (it = articles.begin();
@@ -246,13 +258,11 @@ bool ParseFeed(const std::string& json,
           category_articles.splice(category_articles.end(), articles, it--);
         }
       }
-      LOG(ERROR) << "inserting category articles to page # " << category_articles.size();
       page->items_by_category->articles.insert(page->items_by_category->articles.end(),
           std::make_move_iterator(category_articles.begin()),
           std::make_move_iterator(category_articles.end()));
       category_it++;
     }
-    LOG(ERROR) << "collecting deals if there are any";
     // Collect deals
     std::list<mojom::DealPtr> page_deals;
     const auto desired_deal_count = 3u;
@@ -260,7 +270,6 @@ bool ParseFeed(const std::string& json,
       std::string deal_category_name = *deal_category_it;
       // Increment for next page
       deal_category_it++;
-      LOG(ERROR) << "Making page of deals for cat: " << deal_category_name;
       std::list<mojom::DealPtr>::iterator it;
       for (it = deals.begin();
               it != deals.end() && page_deals.size() < desired_deal_count;
@@ -272,30 +281,23 @@ bool ParseFeed(const std::string& json,
     }
     // Supplement with deals from other categories if we end up with fewer
     // than we want
-    LOG(ERROR) << "hh";
     if (page_deals.size() < desired_deal_count) {
       auto supplemental_deal_count = std::min<uint>(
           desired_deal_count, deals.size());
-      LOG(ERROR) << "Need to supplement deals # " << supplemental_deal_count;
       if (supplemental_deal_count > 0) {
         auto begin = deals.begin();
-        LOG(ERROR) << "nexting";
         auto end = std::next(deals.begin(), supplemental_deal_count);
-        LOG(ERROR) << "splicing";
         page_deals.splice(page_deals.end(), deals, begin, end);
       }
     }
     if (page_deals.size()) {
-      LOG(ERROR) << "inserting deals # " << page_deals.size();
       std::vector<mojom::DealPtr> page_deals_v;
       page_deals_v.insert(page_deals_v.end(),
           std::make_move_iterator(page_deals.begin()),
           std::make_move_iterator(page_deals.end()));
-      LOG(ERROR) << "made, moving";
       page->deals = std::move(page_deals_v);
     }
     // Items by publisher
-    LOG(ERROR) << "items by publisher";
     std::string page_publisher_id;
     std::list<mojom::ArticlePtr> page_publisher_articles;
     std::list<mojom::ArticlePtr>::iterator it;
@@ -317,7 +319,6 @@ bool ParseFeed(const std::string& json,
             page_publisher_articles.end(), articles, it--);
       }
     }
-    LOG(ERROR) << "inserting publisher articles to page # " << page_publisher_articles.size();
     if (page_publisher_articles.size()) {
       page->items_by_publisher = mojom::PublisherArticles::New();
       page->items_by_publisher->publisher_id = page_publisher_id;
@@ -327,9 +328,7 @@ bool ParseFeed(const std::string& json,
           std::make_move_iterator(page_publisher_articles.end()));
     }
     // Promoted articles
-    LOG(ERROR) << "promoted articles";
     if (promoted_it != promoted_articles.end()) {
-      LOG(ERROR) << "moving a promoted article";
       // Remove 1 item at the beginning
       auto i = std::make_move_iterator(promoted_it);
       auto item = *i;
@@ -338,7 +337,6 @@ bool ParseFeed(const std::string& json,
       promoted_it = promoted_articles.begin();
     }
     // Random articles
-    LOG(ERROR) << "random";
     const auto desired_random_articles_count = 3u;
     std::list<mojom::ArticlePtr>::iterator random_it;
     std::vector<std::list<mojom::ArticlePtr>::iterator> matching_iterators;
@@ -363,9 +361,9 @@ bool ParseFeed(const std::string& json,
       page->random_articles.push_back(std::move(item));
       articles.erase(matching_iterator);
     }
-    LOG(ERROR) << "done";
     feed->pages.push_back(std::move(page));
   }
+  VLOG(1) << "Made pages # " << feed->pages.size();
   return true;
 }
 

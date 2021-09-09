@@ -24,10 +24,6 @@
 
 class PrefService;
 
-namespace brave {
-class BraveP3AService;
-}  // namespace brave
-
 namespace brave_ads {
 class AdsService;
 }  // namespace brave_ads
@@ -108,6 +104,9 @@ class BraveNewsController : public KeyedService, public mojom::BraveNewsControll
 
   mojom::Feed current_feed_;
   Publishers publishers_;
+
+  // The task tracker for the HistoryService callbacks.
+  base::CancelableTaskTracker task_tracker_;
 
   mojo::ReceiverSet<mojom::BraveNewsController> receivers_;
   base::WeakPtrFactory<BraveNewsController> weak_ptr_factory_;

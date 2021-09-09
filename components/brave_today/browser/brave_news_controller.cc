@@ -20,6 +20,7 @@
 #include "brave/components/brave_today/common/brave_news.mojom-shared.h"
 #include "brave/components/weekly_storage/weekly_storage.h"
 #include "components/history/core/browser/history_service.h"
+#include "components/history/core/browser/history_types.h"
 #include "net/base/escape.h"
 #include "net/base/load_flags.h"
 #include "net/base/url_util.h"
@@ -353,13 +354,30 @@ void BraveNewsController::UpdateFeed(GetFeedCallback callback) {
           [](BraveNewsController* controller, GetFeedCallback callback,
             const std::string& body, Publishers publishers) {
               // TODO(petemill): Handle no publishers
-              // Reset feed data
-              controller->current_feed_.featured_article = nullptr;
-              controller->current_feed_.hash = "";
-              controller->current_feed_.pages.clear();
-              ParseFeed(body, &publishers, &controller->current_feed_);
-              auto clone = controller->current_feed_.Clone();
-              std::move(callback).Run(std::move(clone));
+              // Get history hosts
+              // TODO(petemill): avoid callback hell
+              auto onHistory = base::BindOnce(
+                [](BraveNewsController* controller, GetFeedCallback callback,
+                    const std::string& body, Publishers publishers,
+                    history::QueryResults results) {
+                  std::unordered_set<std::string> history_hosts;
+                  for (const auto &item : results) {
+                    auto host = item.url().host();
+                    history_hosts.insert(host);
+                  }
+                  VLOG(1) << "history hosts # " << history_hosts.size();
+                  controller->ResetFeed();
+                  ParseFeed(body, &publishers, history_hosts, &controller->current_feed_);
+                  auto clone = controller->current_feed_.Clone();
+                  std::move(callback).Run(std::move(clone));
+                }, base::Unretained(controller), std::move(callback),
+                    std::move(body), std::move(publishers));
+              history::QueryOptions options;
+              options.max_count = 2000;
+              options.SetRecentDayRange(14);
+              controller->history_service_->QueryHistory(
+                  std::u16string(), options, std::move(onHistory),
+                  &controller->task_tracker_);
             }, base::Unretained(controller),
               std::move(callback), std::move(body));
         controller->GetOrFetchPublishers(std::move(onPublishers));

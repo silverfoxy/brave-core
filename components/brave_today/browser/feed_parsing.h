@@ -7,6 +7,7 @@
 #define BRAVE_COMPONENT_BRAVE_TODAY_BROWSER_FEED_PARSING_H_
 
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "base/containers/flat_map.h"
@@ -19,6 +20,7 @@ bool ParsePublisherList(const std::string& json,
                         Publishers* publishers);
 bool ParseFeed(const std::string& json,
                         Publishers* publishers,
+                        std::unordered_set<std::string>& history_hosts,
                         mojom::Feed* feed);
 }  // namespace brave_news
 
