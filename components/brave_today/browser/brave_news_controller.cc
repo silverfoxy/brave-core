@@ -91,6 +91,10 @@ void BraveNewsController::Bind(
   receivers_.Add(this, std::move(receiver));
 }
 
+void BraveNewsController::ClearHistory() {
+  // Clear history once we actually store feed cache somewhere
+}
+
 void BraveNewsController::GetFeed(GetFeedCallback callback) {
   GetOrFetchFeed(std::move(callback));
 }

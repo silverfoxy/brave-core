@@ -54,6 +54,8 @@ class BraveNewsController : public KeyedService, public mojom::BraveNewsControll
 
   mojo::PendingRemote<mojom::BraveNewsController> MakeRemote();
   void Bind(mojo::PendingReceiver<mojom::BraveNewsController> receiver);
+  // Remove any cache that would identify user browsing history
+  void ClearHistory();
 
   // mojom::BraveNewsController
   void GetFeed(GetFeedCallback callback) override;
