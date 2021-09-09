@@ -48,11 +48,9 @@ namespace {
       }
     )");
 }
-
 }  // namespace
 
 namespace brave_news {
-using std::move;
 
 BraveNewsController::BraveNewsController(PrefService* prefs,
     brave_ads::AdsService* ads_service,
