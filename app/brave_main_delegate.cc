@@ -18,7 +18,8 @@
 #include "brave/browser/brave_content_browser_client.h"
 #include "brave/common/brave_switches.h"
 #include "brave/common/resource_bundle_helper.h"
-#include "brave/components/brave_component_updater/browser/brave_component.h"
+#include "brave/components/brave_component_updater/browser/features.h"
+#include "brave/components/brave_component_updater/browser/switches.h"
 #include "brave/components/speedreader/buildflags.h"
 #include "brave/renderer/brave_content_renderer_client.h"
 #include "brave/utility/brave_content_utility_client.h"
@@ -86,6 +87,17 @@ const char kBraveOriginTrialsPublicKey[] =
     "fMS4mpO6buLQ/QMd+zJmxzty/VQ6B1EUZqoCU04zoRU=";
 
 const char kDummyUrl[] = "https://no-thanks.invalid";
+
+std::string GetUpdateURLHost() {
+  const base::CommandLine& command_line =
+      *base::CommandLine::ForCurrentProcess();
+  if (!command_line.HasSwitch(brave_component_updater::kUseGoUpdateDev) &&
+      !base::FeatureList::IsEnabled(
+          brave_component_updater::kUseDevUpdaterUrl)) {
+    return UPDATER_PROD_ENDPOINT;
+  }
+  return UPDATER_DEV_ENDPOINT;
+}
 
 BraveMainDelegate::BraveMainDelegate() : ChromeMainDelegate() {}
 
@@ -166,7 +178,7 @@ bool BraveMainDelegate::BasicStartupComplete(int* exit_code) {
   command_line.AppendSwitch(switches::kEnableDomDistiller);
   command_line.AppendSwitch(switches::kNoPings);
 
-  auto update_url = brave_component_updater::GetUpdateURLHost();
+  auto update_url = GetUpdateURLHost();
   if (!update_url.empty()) {
     std::string source = "url-source=" + update_url;
     command_line.AppendSwitchASCII(switches::kComponentUpdater, source.c_str());
