@@ -10,13 +10,35 @@ import { ApplicationState } from '../reducers'
 import { saveIsBraveTodayOptedIn } from '../api/preferences'
 import braveNewsController from '../api/brave_news/brave_news_proxy'
 
+type MojoTime = {
+  internalValue: number
+}
+/**
+ * Converts a mojo time to a JS time.
+ */
+ function convertMojoTimeToJS (mojoTime: MojoTime): Date {
+  // The JS Date() is based off of the number of milliseconds since the
+  // UNIX epoch (1970-01-01 00::00:00 UTC), while |internalValue| of the
+  // base::Time (represented in mojom.Time) represents the number of
+  // microseconds since the Windows FILETIME epoch (1601-01-01 00:00:00 UTC).
+  // This computes the final JS time by computing the epoch delta and the
+  // conversion from microseconds to milliseconds.
+  const windowsEpoch = Date.UTC(1601, 0, 1, 0, 0, 0, 0);
+  const unixEpoch = Date.UTC(1970, 0, 1, 0, 0, 0, 0);
+  // |epochDeltaInMs| equals to base::Time::kTimeTToMicrosecondsOffset.
+  const epochDeltaInMs = unixEpoch - windowsEpoch;
+  const timeInMs = Number(mojoTime.internalValue) / 1000;
+
+  return new Date(timeInMs - epochDeltaInMs);
+};
+
 // TODO(petemill): This is temporary until we remove original types
 function convertArticleFromMojom(item: any): BraveToday.Article {
   try {
     return {
       content_type: 'article',
       category: item.data.category_name,
-      publish_time: "2020-04-17 19:21:10 UTC", // TODO
+      publish_time: convertMojoTimeToJS(item.data.publishTime),
       title: item.data.title,
       description: item.data.description,
       url: item.data.url.url,
@@ -26,7 +48,7 @@ function convertArticleFromMojom(item: any): BraveToday.Article {
       publisher_id: item.data.publisherId,
       publisher_name: item.data.publisherName,
       score: item.data.score,
-      relative_time: 'about 1 hour ago' // TODO
+      relative_time: item.data.relativeTimeDescription // TODO
     }
   }
   catch (e) {
@@ -110,7 +132,7 @@ handler.on(Actions.todayInit.getType(), async (store, payload) => {
 })
 
 handler.on(Actions.interactionBegin.getType(), async () => {
-  chrome.send('todayInteractionBegin')
+  braveNewsController.onInteractionSessionStarted()
 })
 
 handler.on(
@@ -148,45 +170,34 @@ handler.on(Actions.ensureSettingsData.getType(), async (store) => {
 
 handler.on<Actions.ReadFeedItemPayload>(Actions.readFeedItem.getType(), async (store, payload) => {
   const state = store.getState() as ApplicationState
-  const todayPageIndex = state.today.currentPageIndex
-  const backendArgs: any[] = [
-    state.today.cardsVisited
-  ]
+  braveNewsController.onSessionCardVisitsCountChanged(state.today.cardsVisited)
   if (payload.isPromoted) {
-    backendArgs.push(
-      payload.item.url_hash,
-      (payload.item as BraveToday.PromotedArticle).creative_instance_id,
-      payload.isPromoted
-    )
+    const promotedArticle = payload.item as BraveToday.PromotedArticle
+    braveNewsController.onPromotedItemVisit(promotedArticle.url_hash, promotedArticle.creative_instance_id)
   }
-  chrome.send('todayOnCardVisit', backendArgs)
   if (!payload.openInNewTab) {
     // remember article so we can scroll to it on "back" navigation
     // TODO(petemill): Type this history.state data and put in an API module
     // (see `reducers/today`).
     storeInHistoryState({
       todayArticle: payload.item,
-      todayPageIndex,
+      todayPageIndex: state.today.currentPageIndex,
       todayCardsVisited: state.today.cardsVisited
     })
     // visit article url
-    // @ts-ignore
-    window.location = payload.item.url
+    window.location.href = payload.item.url
   } else {
     window.open(payload.item.url, '_blank')
   }
 })
 
 handler.on<BraveToday.PromotedArticle>(Actions.promotedItemViewed.getType(), async (store, item) => {
-  chrome.send('todayOnPromotedCardView', [
-    item.creative_instance_id,
-    item.url_hash
-  ])
+  braveNewsController.onPromotedItemView(item.url_hash, item.creative_instance_id)
 })
 
 handler.on<number>(Actions.feedItemViewedCountChanged.getType(), async (store, payload) => {
   const state = store.getState() as ApplicationState
-  chrome.send('todayOnCardViews', [state.today.cardsViewed])
+  braveNewsController.onSessionCardViewsCountChanged(state.today.cardsViewed)
 })
 
 handler.on<Actions.SetPublisherPrefPayload>(Actions.setPublisherPref.getType(), async (store, payload) => {
@@ -231,11 +242,8 @@ handler.on(Actions.anotherPageNeeded.getType(), async function (store) {
 handler.on<Actions.VisitDisplayAdPayload>(Actions.visitDisplayAd.getType(), async function (store, payload) {
   const state = store.getState() as ApplicationState
   const todayPageIndex = state.today.currentPageIndex
-  chrome.send('todayOnDisplayAdVisit', [
-    payload.ad.uuid,
-    payload.ad.creativeInstanceId
-  ])
-  const destinationUrl = payload.ad.targetUrl
+  braveNewsController.onDisplayAdVisit(payload.ad.uuid, payload.ad.creativeInstanceId)
+  const destinationUrl = payload.ad.targetUrl.url
   if (!payload.openInNewTab) {
     // Remember display ad location so we can scroll to it on "back" navigation
     // We remember position and not ad ID since it can be a different ad on
@@ -248,18 +256,14 @@ handler.on<Actions.VisitDisplayAdPayload>(Actions.visitDisplayAd.getType(), asyn
       todayCardsVisited: state.today.cardsVisited
     })
     // visit article url
-    // @ts-ignore
-    window.location = destinationUrl
+    window.location.href = destinationUrl
   } else {
     window.open(destinationUrl, '_blank')
   }
 })
 
 handler.on<Actions.DisplayAdViewedPayload>(Actions.displayAdViewed.getType(), async (store, item) => {
-  chrome.send('todayOnDisplayAdView', [
-    item.ad.uuid,
-    item.ad.creativeInstanceId
-  ])
+  braveNewsController.onDisplayAdView(item.ad.uuid, item.ad.creativeInstanceId)
 })
 
 export default handler.middleware

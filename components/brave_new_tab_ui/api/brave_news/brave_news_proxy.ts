@@ -8,20 +8,50 @@ import 'gen/mojo/public/mojom/base/time.mojom-lite.js'
 import 'gen/url/mojom/url.mojom-lite.js'
 import 'gen/brave/components/brave_today/common/brave_news.mojom-lite.js'
 
-// declare type Feed = {
+export type PaddedImage = {
+  paddedImageUrl: url.mojom.Url
+}
 
-// }
+export type UnpaddedImage = {
+  imageUrl: url.mojom.Url
+}
 
-// declare type Publisher = {
+type Image = PaddedImage | UnpaddedImage
 
-// }
 
-// declare interface BraveNewsController {
-//   getFeed: () => Feed
-//   getPublishers: () => Publisher[]
-// }
+declare namespace url.mojom {
+  export type Url = {
+    url: string
+  }
+}
+
+export type DisplayAd = {
+  uuid: string
+  creativeInstanceId: string
+  dimensions: string
+  title: string
+  description: string
+  image: Image
+  targetUrl: url.mojom.Url
+  ctaText?: string
+}
+
+export type BraveNewsController = {
+  getFeed: () => Promise<any>
+  getPublishers: () => Promise<any>
+  getImageData: (padded_image_url: url.mojom.Url) => Promise<{ imageData: Uint8Array | undefined }>
+  isFeedUpdateAvailable: (displayed_feed_hash: string) => Promise<{ isUpdateAvailable: boolean }>
+  getDisplayAd:() => Promise<{ ad: DisplayAd | undefined }>
+  onInteractionSessionStarted: () => void
+  onSessionCardVisitsCountChanged: (cardsVisitedSessionTotalCount: number) => void
+  onSessionCardViewsCountChanged: (cardsViewedSessionTotalCount: number) => void
+  onPromotedItemView: (itemId: string, creativeInstanceId: string) => void
+  onPromotedItemVisit: (itemId: string, creativeInstanceId: string) => void
+  onDisplayAdVisit: (itemId: string, creativeInstanceId: string) => void
+  onDisplayAdView: (itemId: string, creativeInstanceId: string) => void
+}
 
 const braveNewsControllerInstance =
-    braveNews.mojom.BraveNewsController.getRemote();
+    braveNews.mojom.BraveNewsController.getRemote() as unknown as BraveNewsController;
 
 export default braveNewsControllerInstance

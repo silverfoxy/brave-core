@@ -14,6 +14,7 @@
 #include "brave/components/api_request_helper/api_request_helper.h"
 #include "brave/components/brave_today/common/brave_news.mojom-forward.h"
 #include "brave/components/brave_today/common/brave_news.mojom.h"
+#include "components/history/core/browser/history_service.h"
 #include "components/keyed_service/core/keyed_service.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "components/prefs/pref_service.h"
@@ -35,6 +36,10 @@ namespace user_prefs {
 class PrefRegistrySyncable;
 }  // namespace user_prefs
 
+namespace history {
+class HistoryService;
+}  // namespace history
+
 namespace brave_news {
 
 using Publishers = base::flat_map<std::string, mojom::PublisherPtr>;
@@ -44,7 +49,8 @@ class BraveNewsController : public KeyedService, public mojom::BraveNewsControll
  public:
   // static void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry);
 
-  BraveNewsController(PrefService* prefs,
+  BraveNewsController(PrefService* prefs, brave_ads::AdsService* ads_service,
+    history::HistoryService* history_service,
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory);
   ~BraveNewsController() override;
   BraveNewsController(const BraveNewsController&) = delete;
@@ -65,6 +71,14 @@ class BraveNewsController : public KeyedService, public mojom::BraveNewsControll
   void IsFeedUpdateAvailable(
       const std::string& displayed_feed_hash,
       IsFeedUpdateAvailableCallback callback) override;
+  void GetDisplayAd(GetDisplayAdCallback callback) override;
+  void OnInteractionSessionStarted() override;
+  void OnSessionCardVisitsCountChanged(uint16_t cards_visited_session_total_count) override;
+  void OnSessionCardViewsCountChanged(uint16_t cards_viewed_session_total_count) override;
+  void OnPromotedItemView(const std::string &item_id, const std::string &creative_instance_id) override;
+  void OnPromotedItemVisit(const std::string &item_id, const std::string &creative_instance_id) override;
+  void OnDisplayAdVisit(const std::string &item_id, const std::string &creative_instance_id) override;
+  void OnDisplayAdView(const std::string &item_id, const std::string &creative_instance_id) override;
 
  private:
   void ConditionallyStartOrStopTimer();
@@ -78,6 +92,8 @@ class BraveNewsController : public KeyedService, public mojom::BraveNewsControll
   void ProvideFeedClone(GetFeedCallback callback);
 
   PrefService* prefs_;
+  brave_ads::AdsService* ads_service_;
+  history::HistoryService* history_service_;
   api_request_helper::APIRequestHelper api_request_helper_;
 
   PrefChangeRegistrar pref_change_registrar_;

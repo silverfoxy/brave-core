@@ -6,6 +6,7 @@
 #include "brave/components/brave_today/browser/feed_parsing.h"
 
 #include <algorithm>
+#include <codecvt>
 #include <cstdint>
 #include <iterator>
 #include <list>
@@ -21,6 +22,7 @@
 #include "brave/components/brave_today/common/brave_news.mojom-forward.h"
 #include "brave/components/brave_today/common/brave_news.mojom.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
+#include "ui/base/l10n/time_format.h"
 
 namespace brave_news {
 
@@ -70,33 +72,42 @@ bool ParseFeed(const std::string& json,
   std::list<mojom::DealPtr> deals;
   std::hash<std::string> hasher;
   for (const base::Value& feed_item_raw : response_list->GetList()) {
-    auto metadata = mojom::FeedItemMetadata::New();
-    metadata->category_name = *feed_item_raw.FindStringKey("category");
-    const char* publish_time_raw = (*feed_item_raw.FindStringKey("publish_time")).c_str();
-    if (!base::Time::FromUTCString(publish_time_raw, &metadata->publish_time)) {
-      LOG(ERROR) << "bad time string for feed item: ";
-    }
-    metadata->title = *feed_item_raw.FindStringKey("title");
-    metadata->description = *feed_item_raw.FindStringKey("description");
-    // TODO(petemill): relative time
     auto image_url_raw = *feed_item_raw.FindStringKey("padded_img");
     // Filter out non-image articles
     if (image_url_raw.empty()) {
       continue;
     }
+    // Parse metadata which all content types have
+    auto metadata = mojom::FeedItemMetadata::New();
+    metadata->category_name = *feed_item_raw.FindStringKey("category");
+    metadata->title = *feed_item_raw.FindStringKey("title");
+    metadata->description = *feed_item_raw.FindStringKey("description");
+    metadata->publisher_id = *feed_item_raw.FindStringKey("publisher_id");
+    metadata->publisher_name = *feed_item_raw.FindStringKey("publisher_name");
+    metadata->score = feed_item_raw.FindDoubleKey("score").value_or(0.0);
     auto image_url = mojom::Image::NewPaddedImageUrl(
       GURL(image_url_raw));
     metadata->image = std::move(image_url);
     auto url_raw = *feed_item_raw.FindStringKey("url");
     auto url = GURL(url_raw);
     metadata->url = std::move(url);
+    // Extract time
+    const char* publish_time_raw = (*feed_item_raw.FindStringKey("publish_time")).c_str();
+    if (!base::Time::FromUTCString(publish_time_raw, &metadata->publish_time)) {
+      LOG(ERROR) << "bad time string for feed item: " << publish_time_raw;
+    } else {
+      // Successful, get language-specific relative time
+      base::TimeDelta relative_time_delta = base::Time::Now() - metadata->publish_time;
+      std::wstring_convert<
+          std::codecvt_utf8_utf16<char16_t>,char16_t> converter;
+      metadata->relative_time_description = converter.to_bytes(ui::TimeFormat::Simple(
+          ui::TimeFormat::Format::FORMAT_ELAPSED,
+          ui::TimeFormat::Length::LENGTH_LONG, relative_time_delta));
+    }
     // Get hash at this point since we have a flat list, and our algorithm
-    // will only change sorting.
+    // will only change sorting which can be re-applied on the next
+    // feed update.
     feed->hash = std::to_string(hasher(feed->hash + url_raw));
-    metadata->publisher_id = *feed_item_raw.FindStringKey("publisher_id");
-    metadata->publisher_name = *feed_item_raw.FindStringKey("publisher_name");
-    metadata->score = feed_item_raw.FindDoubleKey("score").value_or(0.0);
-    metadata->relative_time_description = "TODO relative time";
     // TODO(petemill): validate
     // Detect type
     auto content_type = *feed_item_raw.FindStringKey("content_type");
@@ -185,9 +196,11 @@ bool ParseFeed(const std::string& json,
       break;
     }
   }
-  auto item = *std::make_move_iterator(featured_article_it);
-  feed->featured_article = std::move(item);
-  articles.erase(featured_article_it);
+  if (featured_article_it != articles.end()) {
+    auto item = *std::make_move_iterator(featured_article_it);
+    feed->featured_article = std::move(item);
+    articles.erase(featured_article_it);
+  }
   // Generate as many pages of content as possible
   // Make the pages
   int cur_page = 0;

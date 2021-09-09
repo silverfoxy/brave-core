@@ -8,6 +8,7 @@ import * as BraveTodayElement from './default'
 import CardOptIn from './cards/cardOptIn'
 import CardLoading from './cards/cardLoading'
 import { ReadFeedItemPayload, DisplayAdViewedPayload, VisitDisplayAdPayload } from '../../../actions/today_actions'
+import { BraveNewsController } from '../../../api/brave_news/brave_news_proxy'
 const Content = React.lazy(() => import('./content'))
 
 export type OnReadFeedItem = (args: ReadFeedItemPayload) => any
@@ -15,7 +16,7 @@ export type OnSetPublisherPref = (publisherId: string, enabled: boolean) => any
 export type OnPromotedItemViewed = (item: BraveToday.FeedItem) => any
 export type OnVisitDisplayAd = (args: VisitDisplayAdPayload) => any
 export type OnViewedDisplayAd = (args: DisplayAdViewedPayload) => any
-export type GetDisplayAdContent = () => Promise<BraveToday.DisplayAd | null>
+export type GetDisplayAdContent = BraveNewsController['getDisplayAd']
 
 export type Props = {
   isFetching: boolean

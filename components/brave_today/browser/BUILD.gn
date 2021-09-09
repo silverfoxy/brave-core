@@ -21,6 +21,7 @@ static_library("browser") {
     "//components/keyed_service/core",
     "//components/prefs",
     "//third_party/abseil-cpp:absl",
+    "//ui/base",
     "//url"
   ]
 }
