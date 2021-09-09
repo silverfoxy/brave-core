@@ -7,6 +7,7 @@
 
 #include <utility>
 
+#include "base/metrics/histogram_functions.h"
 #include "base/task/post_task.h"
 #include "base/threading/thread_task_runner_handle.h"
 #include "brave/components/sync/driver/brave_sync_service_impl.h"
@@ -28,6 +29,8 @@ BraveSyncServiceImplDelegate::BraveSyncServiceImplDelegate(
   device_info_tracker_ = device_info_sync_service_->GetDeviceInfoTracker();
   DCHECK(device_info_tracker_);
 
+  SendP3ASyncStatus2();
+
   device_info_observer_.Observe(device_info_tracker_);
 }
 
@@ -35,6 +38,8 @@ BraveSyncServiceImplDelegate::~BraveSyncServiceImplDelegate() {}
 
 void BraveSyncServiceImplDelegate::OnDeviceInfoChange() {
   DCHECK(sync_service_impl_);
+
+  SendP3ASyncStatus2();
 
   const syncer::DeviceInfo* local_device_info =
       local_device_info_provider_->GetLocalDeviceInfo();
@@ -72,6 +77,15 @@ void BraveSyncServiceImplDelegate::ResumeDeviceObserver() {
   if (!device_info_observer_.IsObserving()) {
     device_info_observer_.Observe(device_info_tracker_);
   }
+}
+
+void BraveSyncServiceImplDelegate::SendP3ASyncStatus2() {
+  int num_devices = device_info_tracker_->GetAllDeviceInfo().size();
+
+  // Zero based number of devices, max is 2
+  int p3a_value = (num_devices == 0) ? 0 : std::min(num_devices - 1, 2);
+
+  base::UmaHistogramExactLinear("Brave.Sync.Status.2", p3a_value, 2);
 }
 
 }  // namespace syncer
