@@ -104,7 +104,7 @@ interface BraveNewsController {
   GetPublishers() => (map<string, Publisher> publishers);
   GetImageData(url.mojom.Url padded_image_url) => (array<uint8>? image_data);
   SetPublisherPref(string publisher_id, UserEnabled new_status);
-  ClearPrefs() => (map<string, Publisher> publishers);
+  ClearPrefs();
   IsFeedUpdateAvailable(string displayed_feed_hash) => (bool is_update_available);
   GetDisplayAd() => (DisplayAd? ad);
   // Lets the browser know when a user begins viewing or scrolling

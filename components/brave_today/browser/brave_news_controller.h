@@ -63,7 +63,7 @@ class BraveNewsController : public KeyedService, public mojom::BraveNewsControll
   void SetPublisherPref(
       const std::string& publisher_id,
       mojom::UserEnabled new_status) override;
-  void ClearPrefs(ClearPrefsCallback callback) override;
+  void ClearPrefs() override;
   void IsFeedUpdateAvailable(
       const std::string& displayed_feed_hash,
       IsFeedUpdateAvailableCallback callback) override;
@@ -80,6 +80,9 @@ class BraveNewsController : public KeyedService, public mojom::BraveNewsControll
   void ConditionallyStartOrStopTimer();
   void CheckForFeedsUpdate();
   void CheckForSourcesUpdate();
+  void PublishersIsStale();
+  void FeedIsStale();
+  void ResetFeed();
   void GetOrFetchFeed(GetFeedCallback callback);
   void GetOrFetchPublishers(GetPublishersCallback callback);
   void UpdateFeed(GetFeedCallback callback);

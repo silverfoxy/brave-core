@@ -23,6 +23,7 @@
 #include "brave/components/brave_today/common/brave_news.mojom-forward.h"
 #include "brave/components/brave_today/common/brave_news.mojom-shared.h"
 #include "brave/components/brave_today/common/brave_news.mojom.h"
+#include "components/history/core/browser/history_service.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 #include "ui/base/l10n/time_format.h"
 
@@ -84,6 +85,23 @@ bool ParseFeed(const std::string& json,
     auto image_url_raw = *feed_item_raw.FindStringKey("padded_img");
     // Filter out non-image articles
     if (image_url_raw.empty()) {
+      VLOG(2) << "Found feed item with missing image. Url: " << url_raw;
+      continue;
+    }
+    // Filter out articles from publishers we're ignoring
+    auto publisher_id = *feed_item_raw.FindStringKey("publisher_id");
+    if (publisher_id.empty()) {
+      VLOG(1) << "found article with missing publisher_id. Url: " << url_raw;
+      continue;
+    }
+    if (!publishers->contains(publisher_id)) {
+      VLOG(1) << "found article with unknown publisher_id. PublisherId: "
+          << publisher_id << " Url: " << url_raw;
+      continue;
+    }
+    if (publishers->at(publisher_id)->user_enabled_status ==
+            brave_news::mojom::UserEnabled::DISABLED) {
+      VLOG(1) << "Hiding article for publisher " << publisher_id << ": " << publishers->at(publisher_id)->publisher_name;
       continue;
     }
     // Parse metadata which all content types have
@@ -91,7 +109,7 @@ bool ParseFeed(const std::string& json,
     metadata->category_name = *feed_item_raw.FindStringKey("category");
     metadata->title = *feed_item_raw.FindStringKey("title");
     metadata->description = *feed_item_raw.FindStringKey("description");
-    metadata->publisher_id = *feed_item_raw.FindStringKey("publisher_id");
+    metadata->publisher_id = publisher_id;
     metadata->publisher_name = *feed_item_raw.FindStringKey("publisher_name");
     auto image_url = mojom::Image::NewPaddedImageUrl(
       GURL(image_url_raw));

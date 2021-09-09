@@ -21,6 +21,7 @@
 #include "brave/components/weekly_storage/weekly_storage.h"
 #include "components/history/core/browser/history_service.h"
 #include "components/history/core/browser/history_types.h"
+#include "components/prefs/scoped_user_pref_update.h"
 #include "net/base/escape.h"
 #include "net/base/load_flags.h"
 #include "net/base/url_util.h"
@@ -124,11 +125,22 @@ void BraveNewsController::GetImageData(const GURL& padded_image_url,
 void BraveNewsController::SetPublisherPref(
     const std::string& publisher_id,
     mojom::UserEnabled new_status){
-
+  DictionaryPrefUpdate update(prefs_, kBraveTodaySources);
+  if (new_status == mojom::UserEnabled::NOT_MODIFIED) {
+    update->RemoveKey(publisher_id);
+  } else {
+    update->SetBoolean(publisher_id,
+        (new_status == mojom::UserEnabled::ENABLED));
+  }
+  LOG(ERROR) << "set publisher pref";
+  // Force an update of publishers and feed to include or ignore
+  // content from the affected publisher.
+  PublishersIsStale();
 }
 
-void BraveNewsController::ClearPrefs(ClearPrefsCallback callback){
-
+void BraveNewsController::ClearPrefs(){
+  DictionaryPrefUpdate update(prefs_, kBraveTodaySources);
+  update->DictClear();
 }
 
 void BraveNewsController::IsFeedUpdateAvailable(
@@ -314,6 +326,24 @@ void BraveNewsController::CheckForSourcesUpdate() {
 
 }
 
+void BraveNewsController::PublishersIsStale() {
+  Publishers new_publishers;
+  publishers_ = std::move(new_publishers);
+  FeedIsStale();
+}
+
+void BraveNewsController::FeedIsStale() {
+  ResetFeed();
+  GetFeedCallback do_nothing = base::BindOnce([](mojom::FeedPtr feed){});
+  GetOrFetchFeed(std::move(do_nothing));
+}
+
+void BraveNewsController::ResetFeed() {
+  current_feed_.featured_article = nullptr;
+  current_feed_.hash = "";
+  current_feed_.pages.clear();
+}
+
 void BraveNewsController::GetOrFetchFeed(GetFeedCallback callback) {
   if (!current_feed_.hash.empty()) {
     auto clone = current_feed_.Clone();
@@ -402,10 +432,14 @@ void BraveNewsController::UpdatePublishers(GetPublishersCallback callback) {
           for (auto kv : publisher_prefs->DictItems()) {
             auto publisher_id = kv.first;
             auto is_user_enabled = kv.second.GetIfBool();
-            if (publisher_list.contains(publisher_id)) {
+            if (publisher_list.contains(publisher_id) && is_user_enabled.has_value()) {
               publisher_list[publisher_id]->user_enabled_status =
-                (is_user_enabled ? brave_news::mojom::UserEnabled::ENABLED
+                (is_user_enabled.value() ? brave_news::mojom::UserEnabled::ENABLED
                                 : brave_news::mojom::UserEnabled::DISABLED);
+
+            } else {
+              VLOG(1) << "Publisher list did not contain publisher found in"
+              "user prefs: " << publisher_id;
             }
           }
           // Set memory cache
