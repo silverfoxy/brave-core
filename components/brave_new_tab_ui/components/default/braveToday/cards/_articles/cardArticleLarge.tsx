@@ -145,9 +145,14 @@ const CardSingleArticleLarge = React.forwardRef<HTMLElement, Props>(function (pr
   return (
     <>
       {props.content.map((item, index) => {
+        const key = `card-key-${index}`
         // If there is a missing item, return nothing
         if (item === undefined) {
-          return <></>
+          return (
+            <React.Fragment
+              key={key}>
+            </React.Fragment>
+          )
         }
 
         const shouldScrollIntoView = props.articleToScrollTo && (props.articleToScrollTo.url === item.url)
@@ -157,7 +162,7 @@ const CardSingleArticleLarge = React.forwardRef<HTMLElement, Props>(function (pr
         return (
           <LargeArticle
             ref={ref}
-            key={`card-key-${index}`}
+            key={key}
             publisher={publisher}
             item={item}
             shouldScrollIntoView={shouldScrollIntoView}

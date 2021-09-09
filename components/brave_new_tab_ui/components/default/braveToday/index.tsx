@@ -48,7 +48,7 @@ export const attributeNameCardCount = 'data-today-card-count'
 
 const intersectionOptions = { root: null, rootMargin: '0px', threshold: 0.25 }
 
-export default function BraveTodayContent (props: Props) {
+export default function BraveTodaySection (props: Props) {
   const handleHitsViewportObserver = React.useCallback<IntersectionObserverCallback>((entries) => {
     // When the scroll trigger, hits the viewport, notify externally, and since
     // we won't get updated with that result, change our internal state.
