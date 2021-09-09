@@ -6,12 +6,17 @@
 #include "brave/browser/ui/views/brave_ads/bounds_util.h"
 
 #include "ui/display/screen.h"
+#include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
 
 namespace brave_ads {
 
-void AdjustBoundsToFitWorkAreaForNativeView(gfx::Rect* bounds,
-                                            gfx::NativeView native_view) {
+namespace {
+
+enum class EdgeGravity { kTop, kBottom, kLeft, kRight };
+
+gfx::Rect GetDisplayScreenWorkArea(gfx::Rect* bounds,
+                                   gfx::NativeView native_view) {
   DCHECK(bounds);
 
   gfx::Rect work_area =
@@ -25,7 +30,70 @@ void AdjustBoundsToFitWorkAreaForNativeView(gfx::Rect* bounds,
                     .work_area();
   }
 
+  return work_area;
+}
+
+void AdjustBoundsToFitWorkAreaForNativeView(const gfx::Rect& work_area,
+                                            gfx::Rect* bounds) {
+  DCHECK(bounds);
+
   bounds->AdjustToFit(work_area);
+}
+
+void SnapBoundsToEdgeOfWorkAreaForNativeView(const gfx::Rect& work_area,
+                                             gfx::Rect* bounds) {
+  DCHECK(bounds);
+
+  // Find the nearest screen edge to bounds center point.
+  const gfx::Point center(bounds->x() + bounds->width() / 2,
+                          bounds->y() + bounds->height() / 2);
+  EdgeGravity gravity = EdgeGravity::kTop;
+  int min_dist = bounds->y() - work_area.y();
+
+  int dist =
+      work_area.y() + work_area.height() - bounds->y() - bounds->height();
+  if (min_dist > dist) {
+    min_dist = dist;
+    gravity = EdgeGravity::kBottom;
+  }
+
+  dist = bounds->x() - work_area.x();
+  if (min_dist > dist) {
+    min_dist = dist;
+    gravity = EdgeGravity::kLeft;
+  }
+
+  dist = work_area.x() + work_area.width() - bounds->x() - bounds->width();
+  if (min_dist > dist) {
+    min_dist = dist;
+    gravity = EdgeGravity::kRight;
+  }
+
+  switch (gravity) {
+    case EdgeGravity::kTop:
+      bounds->set_y(work_area.y());
+      break;
+    case EdgeGravity::kBottom:
+      bounds->set_y(work_area.y() + work_area.height() - bounds->height());
+      break;
+    case EdgeGravity::kLeft:
+      bounds->set_x(work_area.x());
+      break;
+    case EdgeGravity::kRight:
+      bounds->set_x(work_area.x() + work_area.width() - bounds->width());
+      break;
+  }
+}
+
+}  // namespace
+
+void AdjustBoundsAndSnapToFitWorkAreaForNativeView(gfx::NativeView native_view,
+                                                   gfx::Rect* bounds) {
+  DCHECK(bounds);
+
+  const gfx::Rect work_area = GetDisplayScreenWorkArea(bounds, native_view);
+  AdjustBoundsToFitWorkAreaForNativeView(work_area, bounds);
+  SnapBoundsToEdgeOfWorkAreaForNativeView(work_area, bounds);
 }
 
 }  // namespace brave_ads
