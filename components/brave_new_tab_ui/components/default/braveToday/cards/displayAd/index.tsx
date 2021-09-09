@@ -4,7 +4,7 @@
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
 import * as React from 'react'
-import { DisplayAd } from '../../../../../api/brave_news'
+import { DisplayAd, PaddedImage, UnpaddedImage } from '../../../../../api/brave_news/brave_news_proxy'
 import VisibilityTimer from '../../../../../helpers/visibilityTimer'
 import { getLocale } from '../../../../../../common/locale'
 import * as Card from '../../cardSizes'
@@ -62,10 +62,10 @@ export default function CardDisplayAd (props: Props) {
   }
   let isImagePadded = true
   let imageUrl: string = ''
-  if (content.image.paddedImageUrl) {
-    imageUrl = content.image.paddedImageUrl.url
-  } else if (content.image.imageUrl) {
-    imageUrl = content.image.imageUrl.url
+  if ((content.image as PaddedImage).paddedImageUrl) {
+    imageUrl = (content.image as PaddedImage).paddedImageUrl.url
+  } else if ((content.image as UnpaddedImage).imageUrl) {
+    imageUrl = (content.image as UnpaddedImage).imageUrl.url
     isImagePadded = false
   }
   // Render ad when one is available for this unit

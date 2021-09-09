@@ -13,6 +13,7 @@
 #include "chrome/browser/profiles/profile.h"
 #include "components/history/core/browser/history_service.h"
 
+
 #include "brave/components/brave_today/browser/brave_news_controller.h"
 #include "chrome/browser/profiles/incognito_helpers.h"
 
@@ -42,6 +43,7 @@ BraveNewsControllerFactory::BraveNewsControllerFactory()
   DependsOn(brave_ads::AdsServiceFactory::GetInstance());
   DependsOn(HistoryServiceFactory::GetInstance());
 }
+
 BrowserContextDependencyManager::GetInstance() {}
 
 
@@ -63,6 +65,7 @@ KeyedService* BraveNewsControllerFactory::BuildServiceInstanceFor(
   return new BraveNewsController(
       user_prefs::UserPrefs::Get(context), ads_service,  history_service,
       shared_url_loader_factory);
+
 
 
   // return new BraveNewsController(

@@ -13,7 +13,7 @@ import NewTabPage from './newTab'
 
 // Utils
 import * as PreferencesAPI from '../api/preferences'
-import getBraveNewsController from '../api/brave_news'
+import braveNewsController from '../api/brave_news/brave_news_proxy'
 import { getActionsForDispatch } from '../api/getActions'
 
 // Types
@@ -34,7 +34,7 @@ interface Props {
 }
 
 const getBraveNewsDisplayAd = function GetBraveNewsDisplayAd () {
-  return getBraveNewsController().getDisplayAd()
+  return braveNewsController.getDisplayAd()
 }
 
 function DefaultPage (props: Props) {
