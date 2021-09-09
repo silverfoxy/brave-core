@@ -27,8 +27,6 @@ const char kSyncV1MetaInfoCleared[] = "brave_sync_v2.v1_meta_info_cleared";
 // Has dismissed message about migration to sync v2
 const char kSyncV2MigrateNoticeDismissed[] =
     "brave_sync_v2.migrate_notice_dismissed";
-// P3A Sync.Enabled metric was sent
-const char kP3ASyncEnabledSent[] = "brave_sync_v2.p3a_sync_enabled_sent";
 // Deprecated
 // ============================================================================
 const char kSyncSeed[] = "brave_sync.seed";
@@ -71,10 +69,9 @@ void Prefs::RegisterProfilePrefs(PrefRegistrySimple* registry) {
   registry->RegisterBooleanPref(kSyncV1Migrated, false);
   registry->RegisterBooleanPref(kSyncV1MetaInfoCleared, false);
   registry->RegisterBooleanPref(kSyncV2MigrateNoticeDismissed, false);
-  registry->RegisterBooleanPref(kP3ASyncEnabledSent, false);
 
-  // Deprecated
-  // ============================================================================
+// Deprecated
+// ============================================================================
   registry->RegisterStringPref(kSyncSeed, std::string());
   registry->RegisterBooleanPref(kSyncEnabled, false);
   registry->RegisterStringPref(kSyncDeviceId, std::string());
@@ -166,14 +163,6 @@ bool Prefs::IsSyncMigrateNoticeDismissed() const {
 
 void Prefs::SetDismissSyncMigrateNotice(bool is_dismissed) {
   pref_service_->SetBoolean(kSyncV2MigrateNoticeDismissed, is_dismissed);
-}
-
-bool Prefs::IsP3ASyncEnabledSent() const {
-  return pref_service_->GetBoolean(kP3ASyncEnabledSent);
-}
-
-void Prefs::SetP3ASyncEnabledSent() {
-  pref_service_->SetBoolean(kP3ASyncEnabledSent, true);
 }
 
 void Prefs::Clear() {
