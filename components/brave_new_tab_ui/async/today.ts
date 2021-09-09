@@ -4,7 +4,6 @@
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
 import AsyncActionHandler from '../../common/AsyncActionHandler'
-import * as Background from '../../common/Background'
 import * as Actions from '../actions/today_actions'
 import { ApplicationState } from '../reducers'
 import { saveIsBraveTodayOptedIn } from '../api/preferences'
@@ -93,7 +92,7 @@ function convertPageFromMojom(page: any): BraveToday.Page {
 function convertFromMojomFeed(feed: any): BraveToday.Feed {
   return {
     hash: feed.hash,
-    featuredArticle: feed.featured_article ? convertArticleFromMojom(feed.featured_article) : undefined,
+    featuredArticle: feed.featuredArticle ? convertArticleFromMojom(feed.featuredArticle) : undefined,
     pages: feed.pages.map((page: any) => convertPageFromMojom(page)),
   }
 }
@@ -120,15 +119,12 @@ function storeInHistoryState (data: Object) {
   history.pushState(newHistoryState, document.title)
 }
 
-import Messages = BraveToday.Messages
-import MessageTypes = Background.MessageTypes.Today
-
 const handler = new AsyncActionHandler()
 
 handler.on(Actions.todayInit.getType(), async (store, payload) => {
   // Let backend know that a UI with today is open, so that it can
   // pre-fetch the feed if it is not already in a cache.
-  await Background.send(MessageTypes.indicatingOpen)
+  // await Background.send(MessageTypes.indicatingOpen)
 })
 
 handler.on(Actions.interactionBegin.getType(), async () => {
@@ -142,8 +138,6 @@ handler.on(
       const [{ feed }, { publishers }] = await Promise.all([
         braveNewsController.getFeed(),
         braveNewsController.getPublishers()
-        // Background.send<Messages.GetFeedResponse>(MessageTypes.getFeed),
-        // Background.send<Messages.GetPublishersResponse>(MessageTypes.getPublishers)
       ])
 
       store.dispatch(Actions.dataReceived({ feed: convertFromMojomFeed(feed), publishers: convertFromMojomPublishers(publishers) }))
@@ -163,7 +157,6 @@ handler.on(Actions.ensureSettingsData.getType(), async (store) => {
   if (state.today.publishers && Object.keys(state.today.publishers).length) {
     return
   }
-  // const { publishers } = await Background.send<Messages.GetPublishersResponse>(MessageTypes.getPublishers)
   const { publishers } = await braveNewsController.getPublishers()
   store.dispatch(Actions.dataReceived({ publishers: convertFromMojomPublishers(publishers) }))
 })
@@ -202,10 +195,12 @@ handler.on<number>(Actions.feedItemViewedCountChanged.getType(), async (store, p
 
 handler.on<Actions.SetPublisherPrefPayload>(Actions.setPublisherPref.getType(), async (store, payload) => {
   const { publisherId, enabled } = payload
-  Background.send<{}, Messages.SetPublisherPrefPayload>(MessageTypes.setPublisherPref, {
-    publisherId,
-    enabled
-  }).catch((e) => console.error(e))
+  let userStatus = (enabled === null)
+    ? braveNews.mojom.UserEnabled.NOT_MODIFIED
+    : enabled === true
+      ? braveNews.mojom.UserEnabled.ENABLED
+      : braveNews.mojom.UserEnabled.DISABLED
+  braveNewsController.setPublisherPref(publisherId, userStatus)
   // Refreshing of content after prefs changed is throttled, so wait
   // a while before seeing if we have new content yet.
   // This doesn't have to be exact since we often check for update when
@@ -222,15 +217,13 @@ handler.on(Actions.checkForUpdate.getType(), async function (store) {
     return
   }
   const hash = state.today.feed.hash
-  // const isUpdateAvailable = await Background.send<Messages.IsFeedUpdateAvailableResponse, Messages.IsFeedUpdateAvailablePayload>(MessageTypes.isFeedUpdateAvailable, {
-  //   hash
-  // })
   const isUpdateAvailable: {isUpdateAvailable: boolean} = await braveNewsController.isFeedUpdateAvailable(hash)
   store.dispatch(Actions.isUpdateAvailable(isUpdateAvailable))
 })
 
 handler.on(Actions.resetTodayPrefsToDefault.getType(), async function (store) {
-  const { publishers } = await Background.send<Messages.ClearPrefsResponse>(MessageTypes.resetPrefsToDefault)
+  braveNewsController.clearPrefs()
+  const { publishers } = await braveNewsController.getPublishers()
   store.dispatch(Actions.dataReceived({ publishers }))
   store.dispatch(Actions.checkForUpdate())
 })
