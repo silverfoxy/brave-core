@@ -29,6 +29,8 @@ export const graphic = styled.div`
 
 export const heading = styled.div`
   padding-top: 21px;
+  padding-left: 25px;
+  padding-right: 25px;
   font-weight: 600;
   font-size: 18px;
   line-height: 27px;
