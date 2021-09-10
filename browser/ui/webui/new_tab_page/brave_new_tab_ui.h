@@ -29,11 +29,9 @@ class BraveNewTabUI : public ui::MojoWebUIController {
   // Instantiates the implementor of the mojo
   // interface passing the pending receiver that will be internally bound.
   void BindInterface(
-      mojo::PendingReceiver<
-          brave_news::mojom::BraveNewsController> receiver);
+      mojo::PendingReceiver<brave_news::mojom::BraveNewsController> receiver);
 
  private:
-
   WEB_UI_CONTROLLER_TYPE_DECL();
 };
 

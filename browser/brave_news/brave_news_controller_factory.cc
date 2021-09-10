@@ -53,9 +53,9 @@ KeyedService* BraveNewsControllerFactory::BuildServiceInstanceFor(
   auto* ads_service = brave_ads::AdsServiceFactory::GetForProfile(profile);
   auto* history_service = HistoryServiceFactory::GetForProfile(
       profile, ServiceAccessType::EXPLICIT_ACCESS);
-  return new BraveNewsController(
-      user_prefs::UserPrefs::Get(context), ads_service,  history_service,
-      shared_url_loader_factory);
+  return new BraveNewsController(user_prefs::UserPrefs::Get(context),
+                                 ads_service, history_service,
+                                 shared_url_loader_factory);
 }
 
 content::BrowserContext* BraveNewsControllerFactory::GetBrowserContextToUse(
@@ -63,4 +63,4 @@ content::BrowserContext* BraveNewsControllerFactory::GetBrowserContextToUse(
   return chrome::GetBrowserContextRedirectedInIncognito(context);
 }
 
-}  // nanespace brave_news
+}  // namespace brave_news

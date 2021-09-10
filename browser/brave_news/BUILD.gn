@@ -1,7 +1,6 @@
 import("//brave/build/config.gni")
 
 source_set("brave_news") {
-
   sources = [
     "brave_news_controller_factory.cc",
     "brave_news_controller_factory.h",

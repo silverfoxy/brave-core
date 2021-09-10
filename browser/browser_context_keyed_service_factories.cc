@@ -80,7 +80,7 @@ void EnsureBrowserContextKeyedServiceFactoriesBuilt() {
   ntp_background_images::NTPBackgroundImagesBridgeFactory::GetInstance();
 #endif
 
-brave_news::BraveNewsControllerFactory::GetInstance();
+  brave_news::BraveNewsControllerFactory::GetInstance();
 
 #if BUILDFLAG(BRAVE_WALLET_ENABLED)
   brave_wallet::AssetRatioControllerFactory::GetInstance();

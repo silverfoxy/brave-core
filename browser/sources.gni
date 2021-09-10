@@ -216,9 +216,7 @@ if (brave_wallet_enabled) {
 }
 
 # brave_news
-brave_chrome_browser_deps += [
-  "//brave/browser/brave_news"
-]
+brave_chrome_browser_deps += [ "//brave/browser/brave_news" ]
 
 if (ethereum_remote_client_enabled) {
   brave_chrome_browser_deps +=

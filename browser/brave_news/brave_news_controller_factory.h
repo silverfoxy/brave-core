@@ -18,8 +18,7 @@ class BraveNewsController;
 
 class BraveNewsControllerFactory : public BrowserContextKeyedServiceFactory {
  public:
-  static BraveNewsController* GetForContext(
-      content::BrowserContext* context);
+  static BraveNewsController* GetForContext(content::BrowserContext* context);
   static BraveNewsControllerFactory* GetInstance();
 
  private:

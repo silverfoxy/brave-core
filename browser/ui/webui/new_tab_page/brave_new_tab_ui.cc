@@ -6,6 +6,7 @@
 #include "brave/browser/ui/webui/new_tab_page/brave_new_tab_ui.h"
 
 #include <string>
+#include <utility>
 
 #include "brave/browser/brave_news/brave_news_controller_factory.h"
 #include "brave/browser/new_tab/new_tab_shows_options.h"
@@ -21,8 +22,9 @@
 #include "ui/base/l10n/l10n_util.h"
 
 BraveNewTabUI::BraveNewTabUI(content::WebUI* web_ui, const std::string& name)
-    : ui::MojoWebUIController(web_ui,
-                      true /* Needed for legacy non-mojom message handler */) {
+    : ui::MojoWebUIController(
+          web_ui,
+          true /* Needed for legacy non-mojom message handler */) {
   Profile* profile = Profile::FromWebUI(web_ui);
 
   if (brave::ShouldNewTabShowBlankpage(profile)) {
@@ -47,8 +49,7 @@ BraveNewTabUI::~BraveNewTabUI() {
 }
 
 void BraveNewTabUI::BindInterface(
-      mojo::PendingReceiver<
-          brave_news::mojom::BraveNewsController> receiver) {
+    mojo::PendingReceiver<brave_news::mojom::BraveNewsController> receiver) {
   auto* profile = Profile::FromWebUI(web_ui());
   DCHECK(profile);
   // Wire up JS mojom to service

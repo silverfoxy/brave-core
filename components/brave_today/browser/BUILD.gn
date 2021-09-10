@@ -4,8 +4,14 @@ static_library("browser") {
   sources = [
     "brave_news_controller.cc",
     "brave_news_controller.h",
+    "feed_controller.cc",
+    "feed_controller.h",
     "feed_parsing.cc",
     "feed_parsing.h",
+    "publishers_controller.cc",
+    "publishers_controller.h",
+    "publishers_parsing.cc",
+    "publishers_parsing.h",
     "urls.cc",
     "urls.h",
   ]
@@ -22,6 +28,6 @@ static_library("browser") {
     "//components/prefs",
     "//third_party/abseil-cpp:absl",
     "//ui/base",
-    "//url"
+    "//url",
   ]
 }
