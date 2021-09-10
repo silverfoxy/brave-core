@@ -1976,6 +1976,9 @@ until they verify, or until 90 days have passed.
     <message name="IDS_SEARCH_TOKENS" desc="Brave wallet search tokens control hint">
       Search tokens
     </message>
+    <message name="IDS_PORTFOLIO" desc="Brave wallet portfolio text">
+      Portfolio
+    </message>
     </messages>
   </release>
 </grit>
