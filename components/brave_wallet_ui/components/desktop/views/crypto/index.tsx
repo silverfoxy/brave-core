@@ -36,12 +36,13 @@ export interface Props {
   onImportAccount: (accountName: string, privateKey: string) => void
   onConnectHardwareWallet: (opts: HardwareWalletConnectOpts) => Promise<HardwareWalletAccount[]>
   onAddHardwareAccounts: (selected: HardwareWalletAccount[]) => void
+  getBalance: (address: string) => Promise<string>
   onUpdateAccountName: (payload: UpdateAccountNamePayloadType) => { success: boolean }
   onToggleAddModal: () => void
   onUpdateVisibleTokens: (list: string[]) => void
   onSelectNetwork: (network: EthereumChain) => void
   fetchFullTokenList: () => void
-  onRemoveAccount: (address: string) => void
+  onRemoveAccount: (address: string, hardware: boolean) => void
   onViewPrivateKey: (address: string, isDefault: boolean) => void
   onDoneViewingPrivateKey: () => void
   onImportAccountFromJson: (accountName: string, password: string, json: string) => void
@@ -78,6 +79,7 @@ const CryptoView = (props: Props) => {
     onCreateAccount,
     onConnectHardwareWallet,
     onAddHardwareAccounts,
+    getBalance,
     onImportAccount,
     onUpdateAccountName,
     onUpdateVisibleTokens,
@@ -245,6 +247,7 @@ const CryptoView = (props: Props) => {
           onImportAccount={onImportAccount}
           onConnectHardwareWallet={onConnectHardwareWallet}
           onAddHardwareAccounts={onAddHardwareAccounts}
+          getBalance={getBalance}
           onImportAccountFromJson={onImportAccountFromJson}
           hasImportError={hasImportError}
           onSetImportError={onSetImportError}
