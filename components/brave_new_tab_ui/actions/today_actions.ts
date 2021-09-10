@@ -4,7 +4,8 @@
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
 import { createAction } from 'redux-act'
-import { DisplayAd } from '../api/brave_news/brave_news_proxy'
+import { DisplayAd } from '../api/brave_news'
+import * as BraveNews from '../api/brave_news'
 
 export const todayInit = createAction('todayInit')
 
@@ -13,8 +14,8 @@ export const interactionBegin = createAction('interactionStart')
 export const ensureSettingsData = createAction('ensureSettingsData')
 
 type DataReceivedPayload = {
-  feed?: BraveToday.Feed
-  publishers?: BraveToday.Publishers
+  feed?: BraveNews.Feed
+  publishers?: BraveNews.Publishers
 }
 export const dataReceived = createAction<DataReceivedPayload>('dataReceived')
 
@@ -34,7 +35,7 @@ export const errorGettingDataFromBackground = createAction<BackgroundErrorPayloa
  * User has requested to read an article
  */
 export type ReadFeedItemPayload = {
-  item: BraveToday.FeedItem,
+  item: BraveNews.FeedItem,
   isPromoted?: boolean,
   openInNewTab?: boolean
 }
@@ -42,7 +43,7 @@ export const readFeedItem = createAction<ReadFeedItemPayload>('readFeedItem')
 
 export const feedItemViewedCountChanged = createAction<number>('feedItemViewedCountChanged')
 
-export const promotedItemViewed = createAction<BraveToday.PromotedArticle>('promotedItemViewed')
+export const promotedItemViewed = createAction<BraveNews.FeedItem>('promotedItemViewed')
 
 export type VisitDisplayAdPayload = {
   ad: DisplayAd

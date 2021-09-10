@@ -343,7 +343,7 @@ void BraveNewsController::FeedIsStale() {
 }
 
 void BraveNewsController::ResetFeed() {
-  current_feed_.featured_article = nullptr;
+  current_feed_.featured_item = nullptr;
   current_feed_.hash = "";
   current_feed_.pages.clear();
 }
