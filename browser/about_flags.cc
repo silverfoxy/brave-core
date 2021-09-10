@@ -195,10 +195,9 @@ constexpr char kBraveTalkDescription[] =
     "and colleagues.";
 
 constexpr char kNativeBraveWalletName[] =
-    "Enable experimental Brave native wallet";
+    "Enable Brave Wallet";
 constexpr char kNativeBraveWalletDescription[] =
-    "Experimental native cryptocurrency wallet support without the use of "
-    "extensions";
+    "Native cryptocurrency wallet support without the use of extensions";
 
 constexpr char kUseDevUpdaterUrlName[] = "Use dev updater url";
 constexpr char kUseDevUpdaterUrlDescription[] =
