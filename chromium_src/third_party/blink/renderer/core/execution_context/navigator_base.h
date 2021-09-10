@@ -6,22 +6,25 @@
 #ifndef BRAVE_CHROMIUM_SRC_THIRD_PARTY_BLINK_RENDERER_CORE_EXECUTION_CONTEXT_NAVIGATOR_BASE_H_
 #define BRAVE_CHROMIUM_SRC_THIRD_PARTY_BLINK_RENDERER_CORE_EXECUTION_CONTEXT_NAVIGATOR_BASE_H_
 
-#include "third_party/blink/public/platform/web_content_settings_client.h"
-#include "third_party/blink/renderer/core/frame/local_dom_window.h"
-#include "third_party/blink/renderer/core/frame/local_frame.h"
+#include "third_party/blink/renderer/core/execution_context/execution_context_lifecycle_observer.h"
+#include "third_party/blink/renderer/core/frame/navigator_concurrent_hardware.h"
+#include "third_party/blink/renderer/core/frame/navigator_device_memory.h"
 #include "third_party/blink/renderer/core/frame/navigator_id.h"
-#include "third_party/blink/renderer/core/loader/frame_loader.h"
+#include "third_party/blink/renderer/core/frame/navigator_language.h"
+#include "third_party/blink/renderer/core/frame/navigator_on_line.h"
+#include "third_party/blink/renderer/core/frame/navigator_ua.h"
+#include "third_party/blink/renderer/core/inspector/inspector_audits_issue.h"
+#include "third_party/blink/renderer/core/inspector/protocol/Audits.h"
+#include "third_party/blink/renderer/platform/bindings/script_wrappable.h"
+#include "third_party/blink/renderer/platform/heap/handle.h"
+#include "third_party/blink/renderer/platform/supplementable.h"
 
-#define BRAVE_NAVIGATOR_BASE_USER_AGENT                                \
-  if (blink::WebContentSettingsClient* settings =                      \
-          brave::GetContentSettingsClientFor(GetExecutionContext())) { \
-    if (!settings->AllowFingerprinting(true)) {                        \
-      return brave::BraveSessionCache::From(*(GetExecutionContext()))  \
-          .FarbledUserAgent(GetExecutionContext()->UserAgent());       \
-    }                                                                  \
-  }
+#define userAgent                 \
+  userAgent_ChromiumImpl() const; \
+  String userAgent
 
 #include "../../../../../../../third_party/blink/renderer/core/execution_context/navigator_base.h"
-#undef BRAVE_NAVIGATOR_BASE_USER_AGENT
+
+#undef userAgent
 
 #endif  // BRAVE_CHROMIUM_SRC_THIRD_PARTY_BLINK_RENDERER_CORE_EXECUTION_CONTEXT_NAVIGATOR_BASE_H_
