@@ -1,9 +1,10 @@
 import * as React from 'react'
-import SelectRegion from './components/select-region'
+import SelectRegionList from './components/select-region-list'
 import MainPanel from './components/main-panel'
 import ErrorPanel from './components/error-panel'
-import apiProxy from './vpn_panel_api_proxy.js'
-import { ConnectionState } from './types/connection_state'
+import apiProxy from './api/vpn_panel_api_proxy.js'
+import { ConnectionState } from './api/panel_browser_api'
+import { RegionState, Region } from './api/region_interface'
 
 function Main () {
   const [isOn, setOn] = React.useState(false)
@@ -11,14 +12,29 @@ function Main () {
   const [hasError, setHasError] = React.useState(false)
   const [status, setStatus] = React.useState<ConnectionState>(ConnectionState.DISCONNECTED)
 
+  /* TODO(simonhong & nullhook): Get default state, match device timezone to
+  /* proper region and expose to mojom as GetDeviceRegion
+  */
+  const [region, setRegion] = React.useState<RegionState>({
+    all: null,
+    current: { continent: 'Europe', name: 'eu-de', namePretty: 'Germany' },
+    hasError: false
+  })
+
+  // VPN api actions should be performed on user interactions only
   const handleToggleClick = () => {
-    // VPN actions should be performed on user interactions
     setOn(prevState => {
       const newState = !prevState
       if (newState) apiProxy.getInstance().connect()
       else apiProxy.getInstance().disconnect()
       return newState
     })
+  }
+
+  const handleTryAgain = () => {
+    setHasError(false)
+    setOn(true)
+    apiProxy.getInstance().connect()
   }
 
   const handleSelectRegionButtonClick = () => setSelectingRegion(true)
@@ -35,21 +51,34 @@ function Main () {
     setSelectingRegion(false)
   }
 
-  const handleTryAgain = () => {
-    setHasError(false)
-    setOn(true)
-    apiProxy.getInstance().connect()
+  const handleRegionItemClick = (currentRegion: Region) => {
+    setRegion(prevState => ({
+      ...prevState,
+      current: currentRegion
+    }))
   }
 
   React.useEffect(() => {
-    const visibilityChangedListener = () => {
+    const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         resetUI(hasError)
         apiProxy.getInstance().showUI()
       }
     }
 
-    document.addEventListener('visibilitychange', visibilityChangedListener)
+    // TODO(nullhook): Get and set default state for current region
+    const getAllRegions = async () => {
+      try {
+        const allRegions = await apiProxy.getInstance().getAllRegions()
+        setRegion(prevState => ({ ...prevState, all: allRegions.regions }))
+      } catch (err) {
+        console.error(err)
+        // TODO(nullhook): Create an error component for region list
+        setRegion(prevState => ({ ...prevState, hasError: true }))
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     apiProxy.getInstance().addVPNObserver({
       onConnectionCreated: () => {/**/},
@@ -64,8 +93,10 @@ function Main () {
       }
     })
 
+    getAllRegions().catch(e => console.error('getAllRegions failed', e))
+
     return () => {
-      document.removeEventListener('visibilitychange', visibilityChangedListener)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   }, [hasError])
 
@@ -82,7 +113,13 @@ function Main () {
   }, [])
 
   if (isSelectingRegion) {
-    return <SelectRegion onDone={onSelectingRegionDone} />
+    return (
+      <SelectRegionList
+        regions={region.all}
+        selectedRegion={region.current}
+        onDone={onSelectingRegionDone}
+        onRegionClick={handleRegionItemClick}
+      />)
   }
 
   if (hasError) {
@@ -90,7 +127,7 @@ function Main () {
       <ErrorPanel
         onTryAgainClick={handleTryAgain}
         onChooseServerClick={handleSelectRegionButtonClick}
-        region='Tokyo'
+        region={region}
       />
     )
   }
@@ -99,7 +136,7 @@ function Main () {
     <MainPanel
       isOn={isOn}
       status={status}
-      region='Tokyo' // TODO(nullhook): Transfer to a stateful value
+      region={region}
       onToggleClick={handleToggleClick}
       onSelectRegionButtonClick={handleSelectRegionButtonClick}
     />

@@ -5,6 +5,7 @@
 
 #include "brave/components/brave_vpn/brave_vpn_service_desktop.h"
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 
@@ -244,6 +245,11 @@ void BraveVpnServiceDesktop::ParseAndCacheRegionList(base::Value region_value) {
 
     regions_.push_back(region);
   }
+
+  std::sort(regions_.begin(), regions_.end(),
+            [](brave_vpn::mojom::Region& a, brave_vpn::mojom::Region& b) {
+              return (a.name_pretty < b.name_pretty);
+            });
 }
 
 void BraveVpnServiceDesktop::GetAllRegions(GetAllRegionsCallback callback) {
