@@ -4,6 +4,5 @@
 # you can obtain one at http://mozilla.org/MPL/2.0/.
 
 brave_deps_chrome_browser_resources_settings_build = [
-  "//brave/browser/resources/settings:preprocess",
-  "//brave/browser/resources/settings:preprocess_generated",
+  "//brave/browser/resources/settings:build_ts",
 ]
