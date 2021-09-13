@@ -1701,7 +1701,7 @@ void RewardsServiceImpl::EnableRewards() {
       &RewardsServiceImpl::OnStartProcessForEnableRewards, AsWeakPtr()));
 
   for (auto& observer : observers_) {
-    observer.OnRewardsEnabled();
+    observer.OnEnableRewardsCalled();
   }
 }
 

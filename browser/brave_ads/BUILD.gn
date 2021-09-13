@@ -14,6 +14,20 @@ source_set("brave_ads") {
     "brave_ads_host_private.h",
   ]
 
+  deps = [
+    "//base",
+    "//brave/browser/profiles:util",
+    "//brave/components/brave_adaptive_captcha/buildflags",
+    "//brave/components/brave_ads/browser",
+    "//brave/components/brave_ads/common:mojom",
+    "//chrome/browser/profiles:profile",
+    "//components/dom_distiller/content/browser",
+    "//components/keyed_service/content",
+    "//components/sessions",
+    "//content/public/browser",
+    "//ui/base",
+  ]
+
   if (is_android) {
     sources += [
       "brave_ads_host_android.cc",
@@ -24,19 +38,13 @@ source_set("brave_ads") {
       "brave_ads_host.cc",
       "brave_ads_host.h",
     ]
-  }
 
-  deps = [
-    "//base",
-    "//brave/browser/profiles:util",
-    "//brave/components/brave_adaptive_captcha/buildflags",
-    "//brave/components/brave_ads/browser",
-    "//components/dom_distiller/content/browser",
-    "//components/keyed_service/content",
-    "//components/sessions",
-    "//content/public/browser",
-    "//ui/base",
-  ]
+    deps += [
+      "//chrome/browser/extensions",
+      "//extensions/browser",
+      "//extensions/common",
+    ]
+  }
 
   if (brave_adaptive_captcha_enabled) {
     deps += [

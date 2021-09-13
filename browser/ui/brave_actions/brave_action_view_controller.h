@@ -13,7 +13,6 @@
 #include "extensions/common/extension_id.h"
 
 class BraveActionIconWithBadgeImageSource;
-class BraveActionsContainerDelegate;
 class Browser;
 class ExtensionAction;
 class ExtensionRegistry;
@@ -34,8 +33,7 @@ class BraveActionViewController : public ExtensionActionViewController {
   static std::unique_ptr<BraveActionViewController> Create(
       const extensions::ExtensionId& extension_id,
       Browser* browser,
-      ExtensionsContainer* extensions_container,
-      BraveActionsContainerDelegate* actions_container_delegate);
+      ExtensionsContainer* extensions_container);
 
   bool IsEnabled(content::WebContents* web_contents) const override;
   gfx::Image GetIcon(content::WebContents* web_contents,
@@ -52,8 +50,7 @@ class BraveActionViewController : public ExtensionActionViewController {
       Browser* browser,
       extensions::ExtensionAction* extension_action,
       extensions::ExtensionRegistry* extension_registry,
-      ExtensionsContainer* extensions_container,
-      BraveActionsContainerDelegate* actions_container_delegate);
+      ExtensionsContainer* extensions_container);
 
   ExtensionActionViewController* GetPreferredPopupViewController() override;
   bool TriggerPopupWithUrl(PopupShowAction show_action,
@@ -64,9 +61,6 @@ class BraveActionViewController : public ExtensionActionViewController {
   std::unique_ptr<BraveActionIconWithBadgeImageSource> GetIconImageSource(
       content::WebContents* web_contents,
       const gfx::Size& size);
-
-  BraveActionsContainerDelegate* actions_container_delegate_;  // NOT OWENED
-
   DISALLOW_COPY_AND_ASSIGN(BraveActionViewController);
 };
 

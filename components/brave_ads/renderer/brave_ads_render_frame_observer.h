@@ -8,10 +8,12 @@
 
 #include <memory>
 
-#include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_frame_observer.h"
-#include "third_party/blink/public/web/web_navigation_type.h"
 #include "v8/include/v8.h"
+
+namespace content {
+class RenderFrame;
+}  // namespace content
 
 namespace brave_ads {
 
@@ -19,8 +21,8 @@ class BraveAdsJSHandler;
 
 class BraveAdsRenderFrameObserver : public content::RenderFrameObserver {
  public:
-  explicit BraveAdsRenderFrameObserver(content::RenderFrame* render_frame,
-                                       int32_t world_id);
+  BraveAdsRenderFrameObserver(content::RenderFrame* render_frame,
+                              int32_t world_id);
   BraveAdsRenderFrameObserver(const BraveAdsRenderFrameObserver&) = delete;
   BraveAdsRenderFrameObserver& operator=(const BraveAdsRenderFrameObserver&) =
       delete;

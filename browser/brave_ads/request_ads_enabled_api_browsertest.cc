@@ -162,7 +162,7 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled, AdsAlreadyEnabled) {
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(url, contents->GetVisibleURL());
   EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 
   EXPECT_TRUE(content::ExecJs(contents, kBraveRequestAdsEnabled,
@@ -185,7 +185,7 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(url, contents->GetVisibleURL());
   EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 
   content::WebContents* popup_contents = OpenRequestAdsEnabledPopup(contents);
@@ -208,7 +208,7 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(url, contents->GetVisibleURL());
   EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 
   content::WebContents* popup_contents = OpenRequestAdsEnabledPopup(contents);
@@ -230,7 +230,7 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(url, contents->GetVisibleURL());
   EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 
   OpenRequestAdsEnabledPopup(contents);
@@ -250,7 +250,7 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
 
   content::WebContents* contents =
       incognito_browser->tab_strip_model()->GetActiveWebContents();
-  EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(url, contents->GetVisibleURL());
   EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 
   EXPECT_TRUE(content::ExecJs(contents, kBraveRequestAdsEnabled,
@@ -265,7 +265,7 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(url, contents->GetVisibleURL());
 
   EXPECT_EQ(true, content::EvalJs(contents, kBraveRequestAdsEnabledExists,
                                   content::EXECUTE_SCRIPT_NO_USER_GESTURE));
@@ -282,7 +282,7 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestEnabled,
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(url, contents->GetVisibleURL());
   EXPECT_EQ(false, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 }
 
@@ -301,6 +301,6 @@ IN_PROC_BROWSER_TEST_F(RequestAdsEnabledApiTestDisabled,
   ui_test_utils::NavigateToURL(browser(), url);
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
-  EXPECT_EQ(url, contents->GetURL());
+  EXPECT_EQ(url, contents->GetVisibleURL());
   EXPECT_EQ(false, content::EvalJs(contents, kBraveRequestAdsEnabledExists));
 }

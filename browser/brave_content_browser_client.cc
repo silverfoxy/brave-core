@@ -233,7 +233,7 @@ void BindBraveAdsHost(
 #else
         std::make_unique<brave_ads::BraveAdsHostAndroid>(
 #endif  // !defined(OS_ANDROID)
-            profile, web_contents),
+            web_contents),
         std::move(receiver));
   } else {
     // Dummy API which always returns false for private contexts.

@@ -51,7 +51,7 @@ class RewardsServiceObserver : public base::CheckedObserver {
       const ledger::type::RewardsType type,
       const ledger::type::ContributionProcessor processor) {}
 
-  virtual void OnRewardsEnabled() {}
+  virtual void OnEnableRewardsCalled() {}
 
   virtual void OnAdsEnabled(
       brave_rewards::RewardsService* rewards_service,
