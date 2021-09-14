@@ -169,8 +169,8 @@ StorageArea* BraveDOMWindowStorage::ephemeralSessionStorage() {
   if (!ephemeral_namespace)
     return nullptr;
 
-  auto storage_area = ephemeral_namespace->session_storage()->GetCachedArea(
-      window->GetStorageKey());
+  auto storage_area =
+      ephemeral_namespace->session_storage()->GetCachedArea(window);
 
   ephemeral_session_storage_ =
       StorageArea::Create(window, std::move(storage_area),
@@ -198,8 +198,8 @@ StorageArea* BraveDOMWindowStorage::ephemeralLocalStorage(
     return ephemeral_local_storage_;
 
   LocalDOMWindow* window = GetSupplementable();
-  auto storage_area = StorageController::GetInstance()->GetLocalStorageArea(
-      blink::BlinkStorageKey(ephemeral_storage_origin));
+  auto storage_area =
+      StorageController::GetInstance()->GetLocalStorageArea(window);
 
   ephemeral_local_storage_ = StorageArea::Create(
       window, std::move(storage_area), StorageArea::StorageType::kLocalStorage);
