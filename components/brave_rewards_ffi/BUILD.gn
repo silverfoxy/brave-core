@@ -9,6 +9,7 @@ rust_ffi("brave_rewards_ffi") {
   implementation_define = "BRAVE_REWARDS_IMPLEMENTATION"
 
   sources = [
+    "implementation.cc",
     "br-rs/brave-rewards-cxx/src/shim.hpp",
     "br-rs/brave-rewards-cxx/src/wrapper.cpp",
     "br-rs/brave-rewards-cxx/src/wrapper.hpp"
@@ -17,8 +18,7 @@ rust_ffi("brave_rewards_ffi") {
 
 rust_crate("rust_lib") {
   inputs = [
-    "br-rs/brave-rewards-ffi/Cargo.toml",
-    "br-rs/brave-rewards-ffi/cbindgen.toml",
-    "br-rs/brave-rewards-ffi/src/lib.rs",
+    "br-rs/brave-rewards-cxx/Cargo.toml",
+    "br-rs/brave-rewards-cxx/src/lib.rs",
   ]
 }
