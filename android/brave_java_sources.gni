@@ -158,6 +158,8 @@ brave_java_sources = [
   "../../brave/android/java/org/chromium/chrome/browser/settings/BraveLicensePreferences.java",
   "../../brave/android/java/org/chromium/chrome/browser/settings/BraveMainPreferencesBase.java",
   "../../brave/android/java/org/chromium/chrome/browser/settings/BraveNewsPreferences.java",
+  "../../brave/android/java/org/chromium/chrome/browser/settings/BraveNewsCategorySources.java",
+  "../../brave/android/java/org/chromium/chrome/browser/settings/SearchPreference.java",
   "../../brave/android/java/org/chromium/chrome/browser/settings/BravePreferenceDialogFragment.java",
   "../../brave/android/java/org/chromium/chrome/browser/settings/BravePreferenceFragment.java",
   "../../brave/android/java/org/chromium/chrome/browser/settings/BraveRewardsPreferences.java",

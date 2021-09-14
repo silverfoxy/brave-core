@@ -718,8 +718,11 @@ brave_java_resources = [
   "java/res/layout/brave_news_settings_bar_layout.xml",
   "java/res/layout/brave_news_row.xml",
   "java/res/layout/custom_brave_news_sources_preference.xml",
+  
+  "java/res/layout/custom_layout_preference.xml",
+  "java/res/layout/search_preference.xml",
 
-
+  "java/res/layout/activity_asset_detail.xml",
   "java/res/layout/activity_asset_detail.xml",
   "java/res/layout/activity_brave_wallet.xml",
   "java/res/layout/activity_buy_send_swap.xml",

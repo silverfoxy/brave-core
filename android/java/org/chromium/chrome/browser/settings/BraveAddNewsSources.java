@@ -76,7 +76,7 @@ public class BraveAddNewsSources
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getActivity().setTitle(R.string.news_add_source);
-        SettingsUtils.addPreferencesFromResource(this, R.xml.brave_news_sources);
+        SettingsUtils.addPreferencesFromResource(this, R.xml.brave_news_sources_default);
         findPreference(PREF_ADD_SOURCES).setOnPreferenceChangeListener(this);
         InitBraveNewsController();
 

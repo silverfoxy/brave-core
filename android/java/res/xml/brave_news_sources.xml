@@ -14,4 +14,5 @@
             android:dialogLayout="@layout/pref_edittext_dialog"
             android:summary="@string/news_sources" />
 
+
 </PreferenceScreen>

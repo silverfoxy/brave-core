@@ -33,9 +33,9 @@ import org.chromium.chrome.browser.settings.BraveAddNewsSources;
 import org.chromium.chrome.browser.settings.BravePreferenceFragment;
 import org.chromium.components.browser_ui.settings.ChromeBasePreference;
 import org.chromium.components.browser_ui.settings.ChromeSwitchPreference;
+import org.chromium.chrome.browser.settings.SearchPreference;
 import org.chromium.components.browser_ui.settings.SettingsUtils;
 import android.widget.Button;
-
 
 import org.chromium.brave_news.mojom.Publisher;
 import org.chromium.brave_news.mojom.BraveNewsController;
@@ -65,6 +65,7 @@ public class BraveNewsPreferences
     private ChromeBasePreference addSource;
     private EditText mEditText;
     private PreferenceScreen mainScreen;
+    private PreferenceManager preferenceManager;
     private HashMap <String, List<Publisher>> categsPublishers;
 
     private final HashMap<String, Preference> mRemovedPreferences = new HashMap<>();
@@ -115,36 +116,48 @@ public class BraveNewsPreferences
             ChromeBasePreference source = new ChromeBasePreference(ContextUtils.getApplicationContext());
             source.setTitle(category);
             source.setKey(category);
-            // source.setFragment("org.chromium.chrome.browser.settings.BraveAddNewsSources");
+            Bundle prefExtras = source.getExtras();
+            prefExtras.putString("category", category);
+            source.setFragment("org.chromium.chrome.browser.settings.BraveNewsCategorySources");
+
             // source.setOnPreferenceChangeListener(this);
-            source.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    PreferenceManager manager =  getPreferenceManager();
-                    PreferenceScreen sourcesScreen = manager.createPreferenceScreen(ContextUtils.getApplicationContext());
-                    sourcesScreen.setLayoutResource(R.layout.custom_brave_news_sources_preference);
-                    // LinearLayout preferenceView = new LinearLayout(ContextUtils.getApplicationContext()); 
-                    // preferenceView.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT)); 
-                    // preferenceView.setId(android.R.id.list);
-                    // sourcesScreen.bind(preferenceView);
-                    // SettingsUtils.addPreferencesFromResource(settingsFragment, R.xml.brave_news_sources);
-                    // Button buttonDone = new Button(this); 
-                    // buttonDone.setText(R.string.filterButton_Done); 
-                    // buttonDone.setLayoutParams(new LayoutParams(width/2, LayoutParams.WRAP_CONTENT));
-                    // gradientView.addView(buttonDone);
-                    for (Publisher publisher : publishers){
-                        SwitchPreference source = new SwitchPreference(ContextUtils.getApplicationContext()); 
-                        source.setTitle(publisher.publisherName);
-                        source.setChecked(publisher.isEnabled); 
-                        sourcesScreen.addPreference(source); 
-                    }
- 
+            // source.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            //     @Override
+            //     public boolean onPreferenceClick(Preference preference) {
                     
-                    setPreferenceScreen(sourcesScreen);
-                    Log.d("bn", " getfeed  category :" +category);
-                    return false;
-                }
-            });
+            //         PreferenceScreen sourcesScreen = preferenceManager.createPreferenceScreen(ContextUtils.getApplicationContext());
+            //         sourcesScreen.setLayoutResource(R.layout.custom_brave_news_sources_preference);
+       
+            //         SearchPreference search = new SearchPreference(ContextUtils.getApplicationContext()); 
+            //         search.setKey("search_pref");
+            //         search.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            //             @Override
+            //             public boolean onPreferenceChange(Preference preference, Object newValue) {
+            //                 for (Publisher publisher : publishers){
+            //                     SwitchPreference publisherSource = preferenceManager.findPreference(publisher.publisherName);
+            //                     if (publisher.publisherName.toLowerCase().contains((String) newValue)){
+            //                         publisherSource.setVisible(true);
+            //                     } else {
+            //                         publisherSource.setVisible(false);
+            //                     }
+            //                 }
+            //                 return false;
+            //             }
+            //         });
+            //         sourcesScreen.addPreference(search); 
+
+            //         for (Publisher publisher : publishers){
+            //             SwitchPreference source = new SwitchPreference(ContextUtils.getApplicationContext()); 
+            //             source.setTitle(publisher.publisherName);
+            //             source.setKey(publisher.publisherName);
+            //             source.setChecked(publisher.isEnabled); 
+            //             sourcesScreen.addPreference(source); 
+            //         }
+                    
+            //         setPreferenceScreen(sourcesScreen);
+            //         return false;
+            //     }
+            // });
             mainScreen.addPreference(source);
         }
     }
@@ -176,7 +189,8 @@ public class BraveNewsPreferences
         Log.d("bn", "getfeedprefs onCreate");
         getActivity().setTitle(R.string.brave_news_title);
 
-        mainScreen = getPreferenceManager().getPreferenceScreen();
+        preferenceManager = getPreferenceManager();
+        mainScreen = preferenceManager.getPreferenceScreen();
 
         SharedPreferences sharedPreferences = ContextUtils.getAppSharedPreferences();
         boolean isNewsOn = sharedPreferences.getBoolean(PREF_TURN_ON_NEWS, false);
