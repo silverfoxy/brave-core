@@ -573,6 +573,14 @@ Brave is unable to recover your settings.
         <message name="IDS_EXTENSION_UNINSTALL_PROMPT_REMOVE_DATA_CHECKBOX" desc="Checkbox text to ask the user whether they want to remove associated data at uninstall time. Only used when uninstalling an app associated with a particular website.">
           Also clear data from Brave (<ph name="URL">$1<ex>www.google.com</ex></ph>)
         </message>
+
+        <!-- Extension alerts. -->
+        <message name="IDS_EXTENSION_ALERT_ITEM_BLOCKLISTED_MALWARE" desc="A statement that an extension has been newly blocklisted for malware.">
+          Brave found that "<ph name="EXTENSION_NAME">$1<ex>Gmail Checker</ex></ph>" contains malware
+        </message>
+        <message name="IDS_EXTENSIONS_ALERT_ITEM_BLOCKLISTED_MALWARE_TITLE" desc="A statement that multiple extension/apps have been newly blocklisted for malware.">
+          Brave found that these items contain malware:
+        </message>
       </if>
 
       <!-- chrome://settings/extensions page -->
@@ -1065,6 +1073,25 @@ Brave is unable to recover your settings.
         <message name="IDS_MISSING_STORAGE_PERMISSION_DOWNLOAD_EDUCATION_TEXT" desc="Text shown educating the user that Brave is missing the Android storage permission, which is required to download files.">
           Brave needs storage access to download files
         </message>
+
+        <message name="IDS_MESSAGE_MISSING_AR_CAMERA_PERMISSION_TEXT" desc="Text shown in a prompt ui when a website has requested access to augmented reality capabilities, but Brave is missing the Android camera permission.">
+          Brave needs camera permission to create a 3D map of your surroundings
+        </message>
+        <message name="IDS_MESSAGE_MISSING_CAMERA_PERMISSION_TEXT" desc="Text shown in a prompt ui when a website has requested access to the camera capabilities, but Brave is missing the Android camera permission.">
+          Brave needs camera permission for this site
+        </message>
+        <message name="IDS_MESSAGE_MISSING_MICROPHONE_PERMISSION_TEXT" desc="Text shown in a prompt ui when a website has requested access to the microphone capabilities, but Brave is missing the Android microphone permission.">
+          Brave needs microphone permission for this site
+        </message>
+        <message name="IDS_MESSAGE_MISSING_MICROPHONE_CAMERA_PERMISSIONS_TEXT" desc="Text shown in a prompt ui when a website has requested access to the microphone and camera capabilities, but Brave is missing the Android microphone and camera permissions.">
+          Brave needs camera and microphone permissions for this site
+        </message>
+        <message name="IDS_MESSAGE_MISSING_LOCATION_PERMISSION_TEXT" desc="Text shown in a prompt ui when a website has requested access to the location capabilities, but Brave is missing the Android location permission.">
+          Brave needs location permission for this site
+        </message>
+        <message name="IDS_MESSAGE_STORAGE_ACCESS_PERMISSION_TEXT" desc="Text shown educating the user that Brave is missing the Android storage permission, which is required to download files.">
+          Brave needs storage access permission to download files
+        </message>
       </if>
 
       <if expr="is_macosx">
@@ -1092,11 +1119,15 @@ Brave is unable to recover your settings.
         <message name="IDS_OS_INSTALL_SCREEN_INTRO_SUBTITLE" desc="Subtitle text of the OS install screen's introduction step">
           Installing Chrome OS will overwrite all data on your device.
         </message>
-        <message name="IDS_OS_INSTALL_SCREEN_INTRO_BODY" desc="Body text of the OS install screen's introduction step">
-          <ph name="BEGIN_PARAGRAPH1">&lt;p&gt;</ph>Before we get started, please ensure that you have an up-to-date backup of your data. Installing Chrome OS will overwrite all data on your hard drive.<ph name="END_PARAGRAPH1">&lt;/p&gt;</ph>
-          <ph name="BEGIN_PARAGRAPH2">&lt;p&gt;</ph>Brave is not responsible for any data loss, and makes no guarantee that Chrome OS will work on uncertified models. Please visit [TBD] to learn more about certified models.<ph name="END_PARAGRAPH2">&lt;/p&gt;</ph>
-          <ph name="BEGIN_PARAGRAPH3">&lt;p&gt;</ph>Learn more about installing Chrome OS and data erasure: [TBD URL]<ph name="END_PARAGRAPH3">&lt;/p&gt;</ph>
-          <ph name="BEGIN_PARAGRAPH4">&lt;p&gt;</ph>If you are ready to proceed, click “Install Chrome OS” and we'll guide you through the installation in just a couple easy steps. You'll have another chance to confirm before we make any changes to your computer.<ph name="END_PARAGRAPH4">&lt;/p&gt;</ph>
+        <message name="IDS_OS_INSTALL_SCREEN_INTRO_BODY" translateable="false" desc="Body text of the OS install screen's introduction step">
+          <ph name="BEGIN_PARAGRAPH1">&lt;p&gt;</ph>Before getting started, please ensure that you have an up-to-date backup of your data. Installing Chrome OS will overwrite your hard drive.<ph name="END_PARAGRAPH1">&lt;/p&gt;</ph>
+          <ph name="BEGIN_PARAGRAPH2">&lt;p&gt;</ph>If you are ready to proceed, click "Install Chrome OS" and we'll guide you through the installation in just a couple easy steps. You'll have another chance to confirm before we make any changes to your computer.<ph name="END_PARAGRAPH2">&lt;/p&gt;</ph>
+        </message>
+        <message name="IDS_OS_INSTALL_SCREEN_INTRO_LEARN_MORE" translateable="false" desc="Learn more text of the OS install screen's introduction step">
+          Learn more about install Chrome OS and data erasure.
+        </message>
+        <message name="IDS_OS_INSTALL_SCREEN_INTRO_FOOTER" translateable="false" desc="Footer text of the OS install screen's introduction step">
+          Brave is not responsible for any data loss, and makes no guarantee that Chrome OS will work on uncertified models. Please visit [TBD link] to learn more about certified models.
         </message>
         <message name="IDS_OS_INSTALL_SCREEN_INTRO_NEXT_BUTTON" desc="Text of the next button on the introduction page of the OS install screen">
           Install Chrome OS
