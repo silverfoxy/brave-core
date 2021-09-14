@@ -19,6 +19,8 @@ class PrefService;
 
 namespace brave_component_updater {
 
+std::string GetUpdateURLHost();
+
 class BraveComponent {
  public:
   using ReadyCallback = base::RepeatingCallback<void(const base::FilePath&,
