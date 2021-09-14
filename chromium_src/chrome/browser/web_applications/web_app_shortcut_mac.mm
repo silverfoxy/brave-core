@@ -11,14 +11,13 @@ namespace {
 base::FilePath GetLocalizableBraveAppShortcutsSubdirName();
 }
 
-#include "../../../../../../chrome/browser/web_applications/components/web_app_shortcut_mac.mm"  // NOLINT
+#include "../../../../../chrome/browser/web_applications/web_app_shortcut_mac.mm"  // NOLINT
 
 namespace {
 base::FilePath GetLocalizableBraveAppShortcutsSubdirName() {
   static const char kBraveBrowserDevelopmentAppDirName[] =
       "Brave Browser Development Apps.localized";
-  static const char kBraveBrowserAppDirName[] =
-      "Brave Browser Apps.localized";
+  static const char kBraveBrowserAppDirName[] = "Brave Browser Apps.localized";
   static const char kBraveBrowserBetaAppDirName[] =
       "Brave Browser Beta Apps.localized";
   static const char kBraveBrowserDevAppDirName[] =
