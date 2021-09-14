@@ -35,8 +35,10 @@ const test = (passthroughArgs, suite, buildConfig = config.defaultBuildConfig, o
   // Running with --disable-gpu-sandbox fixes it, but it's unclear ATM what the
   // issue is.
   if (suite === 'brave_browser_tests' && process.platform === 'win32' && buildConfig === 'Release') {
-    braveArgs.push('--disable-gpu-sandbox')
-  }
+    // braveArgs.push('--disable-gpu-sandbox')
+    braveArgs.push('--enable-gpu-service-logging')
+    braveArgs.push('--v=1')
+  } else
 
   // Android doesn't support --v
   if (config.targetOS !== 'android') {
