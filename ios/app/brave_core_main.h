@@ -10,6 +10,7 @@
 
 @class BraveBookmarksAPI;
 @class BraveHistoryAPI;
+@class BravePasswordAPI;
 @class BraveSyncProfileServiceIOS;
 @protocol BraveWalletKeyringController;
 @protocol BraveWalletAssetRatioController;
@@ -31,6 +32,8 @@ OBJC_EXPORT
 @property(nonatomic, readonly) BraveHistoryAPI* historyAPI;
 
 @property(nonatomic, readonly) BraveSyncProfileServiceIOS* syncProfileService;
+
+@property(nonatomic, readonly) BravePasswordAPI* passwordAPI;
 
 + (void)setLogHandler:(nullable BraveCoreLogHandler)logHandler;
 
