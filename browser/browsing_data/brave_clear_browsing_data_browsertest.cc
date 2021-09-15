@@ -247,7 +247,8 @@ class BraveClearDataOnExitTwoBrowsersTest : public BraveClearDataOnExitTest {
     search_test_utils::WaitForTemplateURLServiceToLoad(
         TemplateURLServiceFactory::GetForProfile(guest));
     // Navigate to about:blank.
-    ui_test_utils::NavigateToURL(browser, GURL(url::kAboutBlankURL));
+    EXPECT_TRUE(
+        ui_test_utils::NavigateToURL(browser, GURL(url::kAboutBlankURL)));
     return browser;
   }
 

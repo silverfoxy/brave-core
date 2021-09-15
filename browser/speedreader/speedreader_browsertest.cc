@@ -175,7 +175,7 @@ IN_PROC_BROWSER_TEST_F(SpeedReaderBrowserTest, DisableSiteWorks) {
 IN_PROC_BROWSER_TEST_F(SpeedReaderBrowserTest, DISABLED_SmokeTest) {
   ToggleSpeedreader();
   const GURL url = https_server_.GetURL(kTestHost, kTestPageReadable);
-  ui_test_utils::NavigateToURL(browser(), url);
+  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
   content::WebContents* contents = ActiveWebContents();
   content::RenderFrameHost* rfh = contents->GetMainFrame();
 
@@ -191,7 +191,7 @@ IN_PROC_BROWSER_TEST_F(SpeedReaderBrowserTest, DISABLED_SmokeTest) {
 
   // Check that disabled speedreader doesn't affect the page.
   ToggleSpeedreader();
-  ui_test_utils::NavigateToURL(browser(), url);
+  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
   rfh = contents->GetMainFrame();
   EXPECT_LT(106000, content::EvalJs(rfh, kGetContentLength));
 }

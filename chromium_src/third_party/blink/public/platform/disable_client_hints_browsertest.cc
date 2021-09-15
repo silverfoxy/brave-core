@@ -94,7 +94,7 @@ IN_PROC_BROWSER_TEST_P(ClientHintsBrowserTest, ClientHintsDisabled) {
   EXPECT_EQ(
       IsLangClientHintHeaderEnabled(),
       base::FeatureList::IsEnabled(blink::features::kLangClientHintHeader));
-  ui_test_utils::NavigateToURL(browser(), client_hints_url());
+  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), client_hints_url()));
   EXPECT_EQ(0u, count_client_hints_headers_seen());
 }
 

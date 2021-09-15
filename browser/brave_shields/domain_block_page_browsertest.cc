@@ -60,7 +60,7 @@ class DomainBlockTestBase : public AdBlockServiceTest {
   }
 
   void NavigateTo(const GURL& url) {
-    ui_test_utils::NavigateToURL(browser(), url);
+    ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
     content::RenderFrameHost* frame = web_contents()->GetMainFrame();
     ASSERT_TRUE(WaitForRenderFrameReady(frame));
   }

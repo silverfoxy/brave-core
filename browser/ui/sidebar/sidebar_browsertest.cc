@@ -53,7 +53,7 @@ IN_PROC_BROWSER_TEST_F(SidebarBrowserTest, BasicTest) {
   EXPECT_TRUE(CanAddCurrentActiveTabToSidebar(browser()));
 
   // If current active tab is NTP, we can't add current url to sidebar.
-  ui_test_utils::NavigateToURL(browser(), GURL("brave://newtab/"));
+  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), GURL("brave://newtab/")));
   EXPECT_FALSE(CanAddCurrentActiveTabToSidebar(browser()));
 
   // Currently we have 4 default items.
@@ -104,7 +104,8 @@ IN_PROC_BROWSER_TEST_F(SidebarBrowserTest, BasicTest) {
 IN_PROC_BROWSER_TEST_F(SidebarBrowserTest, WebTypePanelTest) {
   // By default, sidebar has 4 items.
   EXPECT_EQ(4UL, model()->GetAllSidebarItems().size());
-  ui_test_utils::NavigateToURL(browser(), GURL("brave://settings/"));
+  ASSERT_TRUE(
+      ui_test_utils::NavigateToURL(browser(), GURL("brave://settings/")));
 
   EXPECT_TRUE(CanAddCurrentActiveTabToSidebar(browser()));
   controller()->AddItemWithCurrentTab();
