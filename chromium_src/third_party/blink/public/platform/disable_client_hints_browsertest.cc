@@ -18,6 +18,7 @@
 #include "net/http/http_request_headers.h"
 #include "net/test/embedded_test_server/embedded_test_server.h"
 #include "net/test/embedded_test_server/http_request.h"
+#include "services/network/public/cpp/client_hints.h"
 #include "third_party/blink/public/common/client_hints/client_hints.h"
 #include "third_party/blink/public/common/features.h"
 
@@ -74,9 +75,9 @@ class ClientHintsBrowserTest : public InProcessBrowserTest,
 
  private:
   void MonitorResourceRequest(const net::test_server::HttpRequest& request) {
-    for (size_t i = 0; i < blink::kClientHintsMappingsCount; ++i) {
-      if (base::Contains(request.headers,
-                         blink::kClientHintsHeaderMapping[i])) {
+    for (const auto& elem : network::GetClientHintToNameMap()) {
+      const auto& header = elem.second;
+      if (base::Contains(request.headers, header)) {
         count_client_hints_headers_seen_++;
       }
     }
