@@ -39,7 +39,7 @@ class BraveSyncServiceImplDelegate
 
   void OnSelfDeviceInfoDeleted(void);
 
-  void SendP3ASyncStatus2();
+  void RecordP3ASyncStatus();
 
   syncer::DeviceInfoTracker* device_info_tracker_;
   syncer::LocalDeviceInfoProvider* local_device_info_provider_;

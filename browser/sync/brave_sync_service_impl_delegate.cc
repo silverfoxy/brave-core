@@ -29,8 +29,6 @@ BraveSyncServiceImplDelegate::BraveSyncServiceImplDelegate(
   device_info_tracker_ = device_info_sync_service_->GetDeviceInfoTracker();
   DCHECK(device_info_tracker_);
 
-  SendP3ASyncStatus2();
-
   device_info_observer_.Observe(device_info_tracker_);
 }
 
@@ -39,7 +37,7 @@ BraveSyncServiceImplDelegate::~BraveSyncServiceImplDelegate() {}
 void BraveSyncServiceImplDelegate::OnDeviceInfoChange() {
   DCHECK(sync_service_impl_);
 
-  SendP3ASyncStatus2();
+  RecordP3ASyncStatus();
 
   const syncer::DeviceInfo* local_device_info =
       local_device_info_provider_->GetLocalDeviceInfo();
@@ -79,13 +77,16 @@ void BraveSyncServiceImplDelegate::ResumeDeviceObserver() {
   }
 }
 
-void BraveSyncServiceImplDelegate::SendP3ASyncStatus2() {
+void BraveSyncServiceImplDelegate::RecordP3ASyncStatus() {
   int num_devices = device_info_tracker_->GetAllDeviceInfo().size();
 
-  // Zero based number of devices, max is 2
-  int p3a_value = (num_devices == 0) ? 0 : std::min(num_devices - 1, 2);
+  // 0 - sync is disabled
+  // 1 - one device in chain
+  // 2 - two devices in chain
+  // 3 - threee or more devices in chain
+  int p3a_value = std::min(num_devices, 3);
 
-  base::UmaHistogramExactLinear("Brave.Sync.Status.2", p3a_value, 2);
+  base::UmaHistogramExactLinear("Brave.Sync.Status.2", p3a_value, 3);
 }
 
 }  // namespace syncer
