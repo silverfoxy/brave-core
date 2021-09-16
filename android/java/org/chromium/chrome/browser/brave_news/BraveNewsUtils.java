@@ -62,6 +62,10 @@ public class BraveNewsUtils {
         return newsItems;
     }
 
+    public CopyOnWriteArrayList<NewsItem> createFeed() {
+        CopyOnWriteArrayList<NewsItem> newsItems = new CopyOnWriteArrayList<NewsItem>();
+    }
+
     public CopyOnWriteArrayList<NewsItem> parseJson() {
         JSONArray feedObjects;
         String jsonString = loadJSONFromAsset(mContext);

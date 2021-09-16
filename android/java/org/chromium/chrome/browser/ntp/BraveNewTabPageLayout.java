@@ -119,6 +119,7 @@ import org.chromium.chrome.browser.preferences.BravePref;
 import org.chromium.chrome.browser.preferences.BravePrefServiceBridge;
 import org.chromium.chrome.browser.profiles.Profile;
 
+
 import org.chromium.chrome.browser.settings.BraveNewsPreferences;
 import org.chromium.chrome.browser.settings.SettingsLauncherImpl;
 import org.chromium.brave_news.mojom.BraveNewsController;
@@ -156,6 +157,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.chromium.brave_news.mojom.FeedPage;
+import org.chromium.brave_news.mojom.FeedPageItem;
+import org.chromium.brave_news.mojom.FeedItem;
+import org.chromium.brave_news.mojom.Article;
+import org.chromium.brave_news.mojom.PromotedArticle;
+import org.chromium.brave_news.mojom.Deal;
+import org.chromium.brave_news.mojom.CardType;
 
 public class BraveNewTabPageLayout
         extends NewTabPageLayout implements CryptoWidgetBottomSheetDialogFragment
@@ -765,6 +774,9 @@ public class BraveNewTabPageLayout
             optinLayout.setVisibility(View.GONE);
             parentLayout.removeView(optinLayout);
             feedSpinner.setVisibility(View.VISIBLE);
+
+            CopyOnWriteArrayList<NewsItem> newsItems = new CopyOnWriteArrayList<NewsItem>();
+            CopyOnWriteArrayList<FeedItemMetadata> braveNewsItems = new CopyOnWriteArrayList<FeedItemMetadata>();
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -772,31 +784,92 @@ public class BraveNewTabPageLayout
                     if (mBraveNewsController != null) {
                         mBraveNewsController.getFeed((feed) -> {
                             // Log.d("bn", "getfeed result: " + result);
-                            Log.d("bn", "getfeed feed: " + feed);
-                            Log.d("bn", "getfeed feed hash: " + feed.hash);
-                            Log.d("bn", "getfeed feed pages: " + feed.pages);
-                            Log.d("bn", "getfeed feed pages: " + feed.pages[0].articles[0].data);
-                            Log.d("bn", "getfeed feed pages: " + feed.pages[0].articles[0].data.categoryName);
+                            // Log.d("bn", "getfeed feed: " + feed);
+                            // Log.d("bn", "getfeed feed hash: " + feed.hash);
+                            // Log.d("bn", "getfeed feed pages: " + feed.pages);
+                            // Log.d("bn", "getfeed feed pages: " + feed.pages[0]);
+
+                            for (FeedPage page : feed.pages) {
+                               // Log.d("bn", "getfeed feed pages: " + page); 
+                               // Log.d("bn", "getfeed feed pages: " + page.items); 
+                               // Log.d("bn", "getfeed feed pages: " + page.items[0]); 
+                               for (FeedPageItem cardData : page.items){
+                                    // Log.d("bn", "getfeed feed pages: " + cardData);
+                                    Log.d("bn", "getfeed feed pages type: " + cardData.cardType);
+                                    // Log.d("bn", "getfeed feed pages items: " + cardData.items);
+                                    for (FeedItem item : cardData.items){
+                                        switch(item.which()){
+                                            case FeedItem.Tag.Article:
+                                                
+                                                Article article = item.getArticle();
+                                                FeedItemMetadata articleData = article.data;
+                                                braveNewsItems.add(article.data);
+                                                // Log.d("bn", "getfeed feed pages item type articleData: " + articleData);
+                                                break;
+                                            case FeedItem.Tag.PromotedArticle:
+                                                PromotedArticle promotedArticle = item.getPromotedArticle();
+                                                FeedItemMetadata promotedArticleData = promotedArticle.data;
+                                                String creativeInstanceId = promotedArticle.creativeInstanceId;
+                                                braveNewsItems.add(item.getPromotedArticle());
+                                                Log.d("bn", "getfeed feed pages item type PromotedArticle: " + promotedArticleData);
+                                                Log.d("bn", "getfeed feed pages item type PromotedArticle creativeInstanceId: " + creativeInstanceId);
+                                                break;                                            
+                                            case FeedItem.Tag.Deal:
+                                                Deal deal = item.getDeal();
+                                                FeedItemMetadata dealData = deal.data;
+                                                String offersCategory = deal.offersCategory;
+                                                braveNewsItems.add(item.getPromotedArticle());
+                                                Log.d("bn", "getfeed feed pages item type Deal: " + dealData);
+                                                Log.d("bn", "getfeed feed pages item type Deal offersCategory: " + offersCategory); 
+
+                                                break;
+
+
+                                        }
+                                        Log.d("bn", "getfeed feed pages items which: " + item.which());
+                                        // switch (cardData.cardType){
+                                            // case CardType.DEALS:
+                                            //     Log.d("bn", "getfeed feed pages item type Deal: " + item.getDeal());
+                                            //     break;
+                                            // case CardType.PROMOTED_ARTICLE:
+                                            //     Log.d("bn", "getfeed feed pages item type PromotedArticle: " + item.getPromotedArticle());
+                                            // case CardType.HEADLINE:
+                                            // case CardType.HEADLINE_PAIRED:
+                                            // case CardType.CATEGORY_GROUP:
+                                            // case CardType.PUBLISHER_GROUP:
+                                                // Log.d("bn", "getfeed feed pages item type Article: " + item.getArticle());
+
+                                        // }
+                                        // Log.d("bn", "getfeed feed pages item: " + item.article);
+                                        // if (item.mArticle instanceof Article){
+                                        //     Log.d("bn", "getfeed feed pages item type Article: ");
+                                        // }                                        
+                                        // if (item.promotedArticle instanceof PromotedArticle){
+                                        //     Log.d("bn", "getfeed feed pages item type PromotedArticle: ");
+                                        // }                                        
+                                        // if (item.deal instanceof Deal){
+                                        //     Log.d("bn", "getfeed feed pages item type Deal: ");
+                                        // }
+                                    }
+                                    // if ()
+                                    // for (FeedItem item : items){
+                                        // Log.d("bn", "getfeed feed pages: " + item);
+                                        // Log.d("bn", "getfeed feed pages: " + item.article);
+                                        // Log.d("bn", "getfeed feed pages: " + item.promoted_article);
+                                        // Log.d("bn", "getfeed feed pages: " + item.deal);
+                                    // }
+                               }
+                            }
+
+                            // Log.d("bn", "getfeed feed pages: " + feed.pages[0].articles[0].data);
+                            // Log.d("bn", "getfeed feed pages: " + feed.pages[0].articles[0].data.categoryName);
                             // Log.d("bn", "getfeed feed pages: " + feed.pages[0].articles[0].category_name);
 
-                            Log.d("bn", "getfeed feed featured_article: " + feed.featuredArticle);
+                            // Log.d("bn", "getfeed feed featured_article: " + feed.featuredArticle);
                             // Log.d("bn", "getfeed feed featured_article: " + feed.featured_article?);
                             // Log.d("bn", "getfeed feed featured_article.data: " + feed.featured_article?.data);
                             // Log.d("bn", "getfeed feed featured_article.data.category_name: " + feed.featured_article.data.category_name);
                            
-                        });
-
-
-                        mBraveNewsController.getPublishers((publishers) -> {
-                            Log.d("bn", "getfeed publishers: " + publishers);
-                            for (Map.Entry<String,Publisher> entry : publishers.entrySet()) {
-                              String key = entry.getKey();
-                              Publisher value = entry.getValue();
-                              Log.d("bn", "getfeed publisher data key: " + key);
-                              Log.d("bn", "getfeed publisher data value: " + value);
-                              // do stuff
-                            }
-                            // HashMap<String, Float> map = new HashMap<String, Float>();
                         });
                     } else {
                         Log.d("bn", " getfeed mBraveNewsController is null ");

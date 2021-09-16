@@ -27,6 +27,10 @@
 #include "net/base/url_util.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/network/public/cpp/simple_url_loader.h"
+#include <android/log.h>
+
+#define  LOG_TAG    "testjni"
+#define  ALOG(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 
 namespace {
   net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
@@ -96,6 +100,7 @@ void BraveNewsController::ClearHistory() {
 }
 
 void BraveNewsController::GetFeed(GetFeedCallback callback) {
+  __android_log_print(ANDROID_LOG_DEBUG, "BN", "GetFeed" ); 
   GetOrFetchFeed(std::move(callback));
 }
 
@@ -349,6 +354,7 @@ void BraveNewsController::ResetFeed() {
 }
 
 void BraveNewsController::GetOrFetchFeed(GetFeedCallback callback) {
+    __android_log_print(ANDROID_LOG_DEBUG, "BN", "GetOrFetchFeed" ); 
   if (!current_feed_.hash.empty()) {
     auto clone = current_feed_.Clone();
     std::move(callback).Run(std::move(clone));
@@ -377,6 +383,9 @@ void BraveNewsController::GetOrFetchPublishers(GetPublishersCallback callback) {
 
 void BraveNewsController::UpdateFeed(GetFeedCallback callback) {
   GURL feed_url("https://" + brave_today::GetHostname() + "/brave-today/feed." + brave_today::GetRegionUrlPart() + "json");
+ALOG("This message comes from C at line %d.", __LINE__);
+  __android_log_print(ANDROID_LOG_DEBUG, "BN", "feed_url: %s", brave_today::GetHostname().c_str()); 
+  __android_log_print(ANDROID_LOG_DEBUG, "BN", "feed_url: %s", brave_today::GetRegionUrlPart().c_str()); 
   auto onRequest = base::BindOnce(
     [](BraveNewsController* controller, GetFeedCallback callback,
       const int status, const std::string& body,
@@ -422,6 +431,8 @@ void BraveNewsController::UpdateFeed(GetFeedCallback callback) {
 
 void BraveNewsController::UpdatePublishers(GetPublishersCallback callback) {
   GURL sources_url("https://" + brave_today::GetHostname() + "/sources." + brave_today::GetRegionUrlPart() + "json");
+  VLOG(1) << "sources_url: " << sources_url;
+           
   auto onRequest = base::BindOnce(
     [](BraveNewsController* controller, GetPublishersCallback callback,
       const int status, const std::string& body,
