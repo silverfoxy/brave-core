@@ -14,23 +14,10 @@
 
 namespace media_router {
 
-bool initialized = false;
-
-void InitializeMediaRouter(content::BrowserContext* context) {
-  auto* pref_service = user_prefs::UserPrefs::Get(context);
-  auto enabled = pref_service->GetBoolean(kBraveMediaRouter);
-  pref_service->SetBoolean(::prefs::kEnableMediaRouter, enabled);
-  LOG(ERROR) << "Setting BraveMediaRouter: " << enabled;
-  initialized = true;
-}
-
 bool MediaRouterEnabled(content::BrowserContext* context) {
 #if defined(OS_ANDROID)
   return MediaRouterEnabled_ChromiumImpl(context);
 #endif
-  if (!initialized) {
-    InitializeMediaRouter(context);
-  }
   const PrefService::Preference* pref = GetMediaRouterPref(context);
   CHECK(pref->GetValue()->is_bool());
   return pref->GetValue()->GetBool();
