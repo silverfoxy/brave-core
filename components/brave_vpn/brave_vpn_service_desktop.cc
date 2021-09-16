@@ -5,8 +5,8 @@
 
 #include "brave/components/brave_vpn/brave_vpn_service_desktop.h"
 
+#include <memory>
 #include <utility>
-#include <vector>
 
 #include "base/bind.h"
 #include "base/command_line.h"
@@ -16,6 +16,7 @@
 #include "base/strings/string_split.h"
 #include "base/values.h"
 #include "brave/components/brave_vpn/switches.h"
+#include "third_party/icu/source/i18n/unicode/timezone.h"
 
 namespace {
 
@@ -57,7 +58,7 @@ BraveVpnServiceDesktop::BraveVpnServiceDesktop(
   GetBraveVPNConnectionAPI()->set_target_vpn_entry_name(kBraveVPNEntryName);
   GetBraveVPNConnectionAPI()->CheckConnection(kBraveVPNEntryName);
 
-  FetchRegionList();
+  FetchRegionData();
   CheckPurchasedStatus();
 }
 
@@ -198,10 +199,12 @@ void BraveVpnServiceDesktop::GetConnectionState(
   std::move(callback).Run(state_);
 }
 
-void BraveVpnServiceDesktop::FetchRegionList() {
+void BraveVpnServiceDesktop::FetchRegionData() {
   // Unretained is safe here becasue this class owns request helper.
   GetAllServerRegions(base::BindOnce(&BraveVpnServiceDesktop::OnFetchRegionList,
                                      base::Unretained(this)));
+  GetTimezonesForRegions(base::BindOnce(
+      &BraveVpnServiceDesktop::OnFetchTimezones, base::Unretained(this)));
 }
 
 void BraveVpnServiceDesktop::OnFetchRegionList(const std::string& region_list,
@@ -246,6 +249,87 @@ void BraveVpnServiceDesktop::ParseAndCacheRegionList(base::Value region_value) {
   }
 }
 
+void BraveVpnServiceDesktop::OnFetchTimezones(const std::string& region_list,
+                                              bool success) {
+  if (!success) {
+    // TODO(simonhong): Re-try?
+    return;
+  }
+
+  std::string json_string = "{\"response\": " + region_list + "}";
+  absl::optional<base::Value> value = base::JSONReader::Read(json_string);
+  if (value && value->is_dict()) {
+    ParseAndCacheDefaultRegionName(std::move(*value));
+    return;
+  }
+
+  // TODO(simonhong): Re-try?
+}
+
+void BraveVpnServiceDesktop::ParseAndCacheDefaultRegionName(
+    base::Value timezones_value) {
+  // timezones data seems like below. Each region includes multiple timezones.
+  // Find region that includes device's current timezone.
+  // [
+  //   {
+  //     "name": "us-central",
+  //     "timezones": [
+  //       "America/Grand_Turk",
+  //       "America/Grenada",
+  //       ...
+  //     ]
+  //   },
+  //   {
+  //     "name": "ca-east",
+  //     "timezones": [
+  //       "America/Atikokan",
+  //       "America/Goose_Bay",
+  //       ...
+  //     ]
+  //   },
+  //   ...
+  // ]
+
+  base::Value* timezones_list_value = timezones_value.FindKey("response");
+  DCHECK(timezones_list_value && timezones_list_value->is_list());
+
+  if (!timezones_list_value || !timezones_list_value->is_list())
+    return;
+
+  std::unique_ptr<icu::TimeZone> zone(icu::TimeZone::createDefault());
+  icu::UnicodeString id;
+  zone->getID(id);
+  std::string current_time_zone;
+  id.toUTF8String<std::string>(current_time_zone);
+  if (current_time_zone.empty())
+    return;
+
+  for (const auto& timezones : timezones_list_value->GetList()) {
+    DCHECK(timezones.is_dict());
+    if (!timezones.is_dict())
+      continue;
+
+    const std::string* region_name = timezones.FindStringKey("name");
+    if (!region_name)
+      continue;
+    std::string default_region_name_candidate = *region_name;
+    const base::Value* timezone_list_value = timezones.FindKey("timezones");
+    if (!timezone_list_value || !timezone_list_value->is_list())
+      continue;
+
+    for (const auto& timezone : timezone_list_value->GetList()) {
+      DCHECK(timezone.is_string());
+      if (!timezone.is_string())
+        continue;
+      if (current_time_zone == timezone.GetString()) {
+        default_region_name_ = *region_name;
+        VLOG(2) << "Found default region: " << default_region_name_;
+        return;
+      }
+    }
+  }
+}
+
 void BraveVpnServiceDesktop::GetAllRegions(GetAllRegionsCallback callback) {
   if (regions_.empty()) {
     // TODO(simonhong): Handle this situation.
@@ -257,4 +341,9 @@ void BraveVpnServiceDesktop::GetAllRegions(GetAllRegionsCallback callback) {
     regions.push_back(region.Clone());
   }
   std::move(callback).Run(std::move(regions));
+}
+
+void BraveVpnServiceDesktop::GetDefaultRegionName(
+    GetDefaultRegionNameCallback callback) {
+  std::move(callback).Run(default_region_name_);
 }

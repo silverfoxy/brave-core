@@ -57,6 +57,7 @@ class BraveVpnServiceDesktop
   void Disconnect() override;
   void CreateVPNConnection() override;
   void GetAllRegions(GetAllRegionsCallback callback) override;
+  void GetDefaultRegionName(GetDefaultRegionNameCallback callback) override;
 
  private:
   friend class BraveAppMenuBrowserTest;
@@ -79,11 +80,14 @@ class BraveVpnServiceDesktop
   }
 
   brave_vpn::BraveVPNConnectionInfo GetConnectionInfo();
-  void FetchRegionList();
+  void FetchRegionData();
   void OnFetchRegionList(const std::string& region_list, bool success);
   void ParseAndCacheRegionList(base::Value region_value);
+  void OnFetchTimezones(const std::string& timezone, bool success);
+  void ParseAndCacheDefaultRegionName(base::Value timezons_value);
 
   std::vector<brave_vpn::mojom::Region> regions_;
+  std::string default_region_name_;
   ConnectionState state_ = ConnectionState::DISCONNECTED;
   bool is_purchased_user_ = false;
   base::ScopedObservation<brave_vpn::BraveVPNOSConnectionAPI,
