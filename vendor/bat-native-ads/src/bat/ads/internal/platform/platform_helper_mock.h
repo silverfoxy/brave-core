@@ -13,7 +13,7 @@
 
 namespace ads {
 
-class PlatformHelperMock : public PlatformHelper {
+class PlatformHelperMock final : public PlatformHelper {
  public:
   PlatformHelperMock();
   ~PlatformHelperMock() override;

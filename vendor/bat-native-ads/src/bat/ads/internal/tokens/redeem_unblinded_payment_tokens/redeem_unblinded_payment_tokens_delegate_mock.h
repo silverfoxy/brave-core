@@ -15,7 +15,7 @@ class Time;
 
 namespace ads {
 
-class RedeemUnblindedPaymentTokensDelegateMock
+class RedeemUnblindedPaymentTokensDelegateMock final
     : public RedeemUnblindedPaymentTokensDelegate {
  public:
   RedeemUnblindedPaymentTokensDelegateMock();

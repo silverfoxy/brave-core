@@ -11,7 +11,8 @@
 
 namespace ads {
 
-class RedeemUnblindedTokenDelegateMock : public RedeemUnblindedTokenDelegate {
+class RedeemUnblindedTokenDelegateMock final
+    : public RedeemUnblindedTokenDelegate {
  public:
   RedeemUnblindedTokenDelegateMock();
 

@@ -13,7 +13,7 @@
 namespace ads {
 namespace privacy {
 
-class TokenGenerator : public TokenGeneratorInterface {
+class TokenGenerator final : public TokenGeneratorInterface {
  public:
   TokenGenerator();
 

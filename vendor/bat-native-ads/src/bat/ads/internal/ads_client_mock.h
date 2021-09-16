@@ -16,7 +16,7 @@
 
 namespace ads {
 
-class AdsClientMock : public AdsClient {
+class AdsClientMock final : public AdsClient {
  public:
   AdsClientMock();
 

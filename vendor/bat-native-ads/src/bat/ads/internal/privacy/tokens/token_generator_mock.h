@@ -14,7 +14,7 @@
 namespace ads {
 namespace privacy {
 
-class TokenGeneratorMock : public TokenGenerator {
+class TokenGeneratorMock final : public TokenGenerator {
  public:
   TokenGeneratorMock();
 

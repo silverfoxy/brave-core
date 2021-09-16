@@ -13,7 +13,8 @@
 
 namespace ads {
 
-class RefillUnblindedTokensDelegateMock : public RefillUnblindedTokensDelegate {
+class RefillUnblindedTokensDelegateMock final
+    : public RefillUnblindedTokensDelegate {
  public:
   RefillUnblindedTokensDelegateMock();
 
