@@ -17,7 +17,6 @@ class RefillUnblindedTokensDelegateMock final
     : public RefillUnblindedTokensDelegate {
  public:
   RefillUnblindedTokensDelegateMock();
-
   ~RefillUnblindedTokensDelegateMock() override;
 
   RefillUnblindedTokensDelegateMock(const RefillUnblindedTokensDelegateMock&) =

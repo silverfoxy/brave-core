@@ -14,7 +14,6 @@ namespace ads {
 class AdRewardsDelegateMock final : public AdRewardsDelegate {
  public:
   AdRewardsDelegateMock();
-
   ~AdRewardsDelegateMock() override;
 
   AdRewardsDelegateMock(const AdRewardsDelegateMock&) = delete;

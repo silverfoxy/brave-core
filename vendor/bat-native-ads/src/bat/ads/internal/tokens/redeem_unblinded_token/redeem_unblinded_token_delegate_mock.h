@@ -15,7 +15,6 @@ class RedeemUnblindedTokenDelegateMock final
     : public RedeemUnblindedTokenDelegate {
  public:
   RedeemUnblindedTokenDelegateMock();
-
   ~RedeemUnblindedTokenDelegateMock() override;
 
   RedeemUnblindedTokenDelegateMock(const RedeemUnblindedTokenDelegateMock&) =

@@ -19,7 +19,6 @@ class RedeemUnblindedPaymentTokensDelegateMock final
     : public RedeemUnblindedPaymentTokensDelegate {
  public:
   RedeemUnblindedPaymentTokensDelegateMock();
-
   ~RedeemUnblindedPaymentTokensDelegateMock() override;
 
   RedeemUnblindedPaymentTokensDelegateMock(
