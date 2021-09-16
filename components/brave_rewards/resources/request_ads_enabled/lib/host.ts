@@ -8,6 +8,8 @@ import { createStateManager } from '../../shared/lib/state_manager'
 const rewardsTourURL = 'brave_rewards_panel.html#tour'
 
 export function createHost (): Host {
+  const port = chrome.runtime.connect({ name: 'request-enable-rewards-panel' })
+
   const stateManager = createStateManager<HostState>({
     loading: true,
     rewardsEnabled: false
@@ -36,6 +38,7 @@ export function createHost (): Host {
 
     enableRewards () {
       chrome.braveRewards.enableRewards()
+      port.postMessage(true)
     }
   }
 }

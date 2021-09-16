@@ -1699,10 +1699,6 @@ bool RewardsServiceImpl::ShouldShowOnboarding() const {
 void RewardsServiceImpl::EnableRewards() {
   StartProcess(base::BindOnce(
       &RewardsServiceImpl::OnStartProcessForEnableRewards, AsWeakPtr()));
-
-  for (auto& observer : observers_) {
-    observer.OnEnableRewardsCalled();
-  }
 }
 
 void RewardsServiceImpl::OnStartProcessForEnableRewards() {
@@ -2928,6 +2924,12 @@ void RewardsServiceImpl::ProcessRewardsPageUrl(
       wallet_type,
       action,
       {});
+}
+
+void RewardsServiceImpl::RequestAdsEnabledPopupClosed(bool ads_enabled) {
+  for (auto& observer : observers_) {
+    observer.OnRequestAdsEnabledPopupClosed(ads_enabled);
+  }
 }
 
 void RewardsServiceImpl::OnDisconnectWallet(

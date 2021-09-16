@@ -36,7 +36,7 @@ class BraveAdsHost : public brave_ads::mojom::BraveAdsHost,
   void RequestAdsEnabled(RequestAdsEnabledCallback callback) override;
 
   // brave_rewards::RewardsServiceObserver
-  void OnEnableRewardsCalled() override;
+  void OnRequestAdsEnabledPopupClosed(bool ads_enabled) override;
   void OnAdsEnabled(brave_rewards::RewardsService* rewards_service,
                     bool ads_enabled) override;
 

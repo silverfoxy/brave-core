@@ -78,8 +78,11 @@ void BraveAdsHost::RequestAdsEnabled(RequestAdsEnabledCallback callback) {
   }
 }
 
-void BraveAdsHost::OnEnableRewardsCalled() {
-  RunCallbackAndReset(true);
+void BraveAdsHost::OnRequestAdsEnabledPopupClosed(bool ads_enabled) {
+  // If ads were enabled then do nothing and wait for ads enabled event.
+  if (!ads_enabled) {
+    RunCallbackAndReset(false);
+  }
 }
 
 void BraveAdsHost::OnAdsEnabled(brave_rewards::RewardsService* rewards_service,

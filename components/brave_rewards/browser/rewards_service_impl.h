@@ -307,6 +307,8 @@ class RewardsServiceImpl : public RewardsService,
       const std::string& query,
       ProcessRewardsPageUrlCallback callback) override;
 
+  void RequestAdsEnabledPopupClosed(bool ads_enabled) override;
+
   void DisconnectWallet() override;
 
   void GetAnonWalletStatus(GetAnonWalletStatusCallback callback) override;
