@@ -1,5 +1,3 @@
-import { HardwareWalletAccount } from '../components/desktop/popup-modals/add-account-modal/hardware-wallet-connect/types'
-
 export interface WalletAccountType {
   id: string
   name: string
@@ -517,7 +515,7 @@ export interface KeyringController {
   lock: () => Promise<void>
   unlock: (password: string) => Promise<UnlockReturnInfo>
   addAccount: (accountName: string) => Promise<AddAccountReturnInfo>
-  getHardwareAccounts: () => Promise<{ accounts: HardwareWalletAccount[] }>
+  getHardwareAccounts: () => Promise<{ accounts: AccountInfo[] }>
 }
 
 export interface GetUserAssetsReturnInfo {
