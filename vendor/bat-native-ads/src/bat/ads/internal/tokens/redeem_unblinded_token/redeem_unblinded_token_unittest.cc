@@ -37,8 +37,8 @@ class BatAdsRedeemUnblindedTokenTest : public UnitTestBase {
 
   ~BatAdsRedeemUnblindedTokenTest() override = default;
 
-  privacy::UnblindedTokens* get_unblinded_tokens() {
-    return ConfirmationsState::Get()->get_unblinded_tokens();
+  privacy::UnblindedTokens* GetUnblindedTokens() {
+    return ConfirmationsState::Get()->GetUnblindedTokens();
   }
 
   void SetUnblindedTokens() {
@@ -52,7 +52,7 @@ class BatAdsRedeemUnblindedTokenTest : public UnitTestBase {
     unblinded_token.public_key = PublicKey::decode_base64(
         "crDVI1R6xHQZ4D9cQu4muVM5MaaM1QcOT4It8Y/CYlw=");
 
-    get_unblinded_tokens()->SetTokens({unblinded_token});
+    GetUnblindedTokens()->SetTokens({unblinded_token});
   }
 
   ConfirmationInfo GetConfirmationInfo() {
@@ -63,10 +63,10 @@ class BatAdsRedeemUnblindedTokenTest : public UnitTestBase {
 
     confirmation.type = ConfirmationType::kViewed;
 
-    if (!ConfirmationsState::Get()->get_unblinded_tokens()->IsEmpty()) {
+    if (!ConfirmationsState::Get()->GetUnblindedTokens()->IsEmpty()) {
       const privacy::UnblindedTokenInfo unblinded_token =
-          get_unblinded_tokens()->GetToken();
-      get_unblinded_tokens()->RemoveToken(unblinded_token);
+          GetUnblindedTokens()->GetToken();
+      GetUnblindedTokens()->RemoveToken(unblinded_token);
       confirmation.unblinded_token = unblinded_token;
 
       const std::string payment_token_base64 =

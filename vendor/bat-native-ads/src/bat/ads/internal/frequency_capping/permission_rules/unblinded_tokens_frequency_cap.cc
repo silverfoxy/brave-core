@@ -32,12 +32,12 @@ bool UnblindedTokensFrequencyCap::ShouldAllow() {
   return true;
 }
 
-std::string UnblindedTokensFrequencyCap::get_last_message() const {
+std::string UnblindedTokensFrequencyCap::GetLastMessage() const {
   return last_message_;
 }
 
 bool UnblindedTokensFrequencyCap::DoesRespectCap() {
-  const int count = ConfirmationsState::Get()->get_unblinded_tokens()->Count();
+  const int count = ConfirmationsState::Get()->GetUnblindedTokens()->Count();
   if (count < kUnblindedTokensMinimumThreshold) {
     return false;
   }

@@ -68,16 +68,16 @@ void Confirmations::SetCatalogIssuers(
   }
 
   const CatalogIssuersInfo current_catalog_issuers =
-      ConfirmationsState::Get()->get_catalog_issuers();
+      ConfirmationsState::Get()->GetCatalogIssuers();
 
   const bool public_key_was_rotated =
       !current_catalog_issuers.public_key.empty() &&
       current_catalog_issuers.public_key != catalog_issuers.public_key;
 
-  ConfirmationsState::Get()->set_catalog_issuers(catalog_issuers);
+  ConfirmationsState::Get()->SetCatalogIssuers(catalog_issuers);
 
   if (public_key_was_rotated) {
-    ConfirmationsState::Get()->get_unblinded_tokens()->RemoveAllTokens();
+    ConfirmationsState::Get()->GetUnblindedTokens()->RemoveAllTokens();
   }
 
   ConfirmationsState::Get()->Save();
@@ -128,9 +128,9 @@ ConfirmationInfo Confirmations::CreateConfirmation(
   confirmation.timestamp = static_cast<int64_t>(base::Time::Now().ToDoubleT());
 
   if (ShouldRewardUser() &&
-      !ConfirmationsState::Get()->get_unblinded_tokens()->IsEmpty()) {
+      !ConfirmationsState::Get()->GetUnblindedTokens()->IsEmpty()) {
     const privacy::UnblindedTokenInfo unblinded_token =
-        ConfirmationsState::Get()->get_unblinded_tokens()->GetToken();
+        ConfirmationsState::Get()->GetUnblindedTokens()->GetToken();
     confirmation.unblinded_token = unblinded_token;
 
     const std::vector<Token> tokens = token_generator_->Generate(1);
@@ -148,7 +148,7 @@ ConfirmationInfo Confirmations::CreateConfirmation(
     const std::string payload = CreateConfirmationRequestDTO(confirmation);
     confirmation.credential = CreateCredential(unblinded_token, payload);
 
-    ConfirmationsState::Get()->get_unblinded_tokens()->RemoveToken(
+    ConfirmationsState::Get()->GetUnblindedTokens()->RemoveToken(
         unblinded_token);
     ConfirmationsState::Get()->Save();
   }
@@ -158,7 +158,7 @@ ConfirmationInfo Confirmations::CreateConfirmation(
 
 void Confirmations::CreateNewConfirmationAndAppendToRetryQueue(
     const ConfirmationInfo& confirmation) {
-  if (ConfirmationsState::Get()->get_unblinded_tokens()->IsEmpty()) {
+  if (ConfirmationsState::Get()->GetUnblindedTokens()->IsEmpty()) {
     AppendToRetryQueue(confirmation);
     return;
   }
@@ -177,7 +177,7 @@ void Confirmations::CreateNewConfirmationAndAppendToRetryQueue(
 }
 
 void Confirmations::AppendToRetryQueue(const ConfirmationInfo& confirmation) {
-  ConfirmationsState::Get()->append_failed_confirmation(confirmation);
+  ConfirmationsState::Get()->AppendFailedConfirmation(confirmation);
   ConfirmationsState::Get()->Save();
 
   BLOG(1, "Added confirmation id " << confirmation.id
@@ -189,7 +189,7 @@ void Confirmations::AppendToRetryQueue(const ConfirmationInfo& confirmation) {
 }
 
 void Confirmations::RemoveFromRetryQueue(const ConfirmationInfo& confirmation) {
-  if (!ConfirmationsState::Get()->remove_failed_confirmation(confirmation)) {
+  if (!ConfirmationsState::Get()->RemoveFailedConfirmation(confirmation)) {
     BLOG(0, "Failed to remove confirmation id "
                 << confirmation.id << ", creative instance id "
                 << confirmation.creative_instance_id << " and "
@@ -212,7 +212,7 @@ void Confirmations::RemoveFromRetryQueue(const ConfirmationInfo& confirmation) {
 
 void Confirmations::Retry() {
   ConfirmationList failed_confirmations =
-      ConfirmationsState::Get()->get_failed_confirmations();
+      ConfirmationsState::Get()->GetFailedConfirmations();
   if (failed_confirmations.empty()) {
     BLOG(1, "No failed confirmations to retry");
     return;
@@ -237,7 +237,7 @@ void Confirmations::OnDidSendConfirmation(
 void Confirmations::OnDidRedeemUnblindedToken(
     const ConfirmationInfo& confirmation,
     const privacy::UnblindedTokenInfo& unblinded_payment_token) {
-  if (ConfirmationsState::Get()->get_unblinded_payment_tokens()->TokenExists(
+  if (ConfirmationsState::Get()->GetUnblindedPaymentTokens()->TokenExists(
           unblinded_payment_token)) {
     BLOG(1, "Unblinded payment token is a duplicate");
     OnFailedToRedeemUnblindedToken(confirmation, /* should_retry */ false);
@@ -249,12 +249,12 @@ void Confirmations::OnDidRedeemUnblindedToken(
               << confirmation.creative_instance_id << " and "
               << std::string(confirmation.type));
 
-  ConfirmationsState::Get()->get_unblinded_payment_tokens()->AddTokens(
+  ConfirmationsState::Get()->GetUnblindedPaymentTokens()->AddTokens(
       {unblinded_payment_token});
   ConfirmationsState::Get()->Save();
 
   const CatalogIssuersInfo catalog_issuers =
-      ConfirmationsState::Get()->get_catalog_issuers();
+      ConfirmationsState::Get()->GetCatalogIssuers();
 
   const absl::optional<double> estimated_redemption_value =
       catalog_issuers.GetEstimatedRedemptionValue(
@@ -269,7 +269,7 @@ void Confirmations::OnDidRedeemUnblindedToken(
        "Added 1 unblinded payment token with an estimated redemption value "
        "of "
            << *estimated_redemption_value << " BAT, you now have "
-           << ConfirmationsState::Get()->get_unblinded_payment_tokens()->Count()
+           << ConfirmationsState::Get()->GetUnblindedPaymentTokens()->Count()
            << " unblinded payment tokens");
 
   NotifyDidConfirm(*estimated_redemption_value, confirmation);

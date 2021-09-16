@@ -32,10 +32,10 @@ UnitTestBase::UnitTestBase()
   // You can do set-up work for each test here
   CHECK(temp_dir_.CreateUniqueTempDir());
 
-  brave_l10n::LocaleHelper::GetInstance()->set_for_testing(
+  brave_l10n::LocaleHelper::GetInstance()->SetForTesting(
       locale_helper_mock_.get());
 
-  PlatformHelper::GetInstance()->set_for_testing(platform_helper_mock_.get());
+  PlatformHelper::GetInstance()->SetForTesting(platform_helper_mock_.get());
 }
 
 UnitTestBase::~UnitTestBase() {

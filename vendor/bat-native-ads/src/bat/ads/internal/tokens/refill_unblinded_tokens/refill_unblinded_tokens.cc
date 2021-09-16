@@ -10,7 +10,7 @@
 #include <utility>
 
 #include "base/bind.h"
-#include "base/check_op.h"
+#include "base/check.h"
 #include "base/json/json_reader.h"
 #include "base/notreached.h"
 #include "base/time/time.h"
@@ -60,12 +60,6 @@ RefillUnblindedTokens::~RefillUnblindedTokens() {
   delegate_ = nullptr;
 }
 
-void RefillUnblindedTokens::set_delegate(
-    RefillUnblindedTokensDelegate* delegate) {
-  DCHECK_EQ(delegate_, nullptr);
-  delegate_ = delegate;
-}
-
 void RefillUnblindedTokens::MaybeRefill(const WalletInfo& wallet) {
   if (is_processing_ || retry_timer_.IsRunning()) {
     return;
@@ -73,7 +67,7 @@ void RefillUnblindedTokens::MaybeRefill(const WalletInfo& wallet) {
 
   if (!ShouldRefillUnblindedTokens()) {
     BLOG(1, "No need to refill unblinded tokens as we already have "
-                << ConfirmationsState::Get()->get_unblinded_tokens()->Count()
+                << ConfirmationsState::Get()->GetUnblindedTokens()->Count()
                 << " unblinded tokens which is above the minimum threshold of "
                 << kMinimumUnblindedTokens);
     return;
@@ -92,7 +86,7 @@ void RefillUnblindedTokens::MaybeRefill(const WalletInfo& wallet) {
   wallet_ = wallet;
 
   const CatalogIssuersInfo catalog_issuers =
-      ConfirmationsState::Get()->get_catalog_issuers();
+      ConfirmationsState::Get()->GetCatalogIssuers();
   if (!catalog_issuers.IsValid()) {
     BLOG(0, "Failed to refill unblinded tokens due to missing catalog issuers");
 
@@ -333,14 +327,13 @@ void RefillUnblindedTokens::OnGetSignedTokens(
     unblinded_tokens.push_back(unblinded_token);
   }
 
-  ConfirmationsState::Get()->get_unblinded_tokens()->AddTokens(
-      unblinded_tokens);
+  ConfirmationsState::Get()->GetUnblindedTokens()->AddTokens(unblinded_tokens);
   ConfirmationsState::Get()->Save();
 
   BLOG(1, "Added " << unblinded_tokens.size()
                    << " unblinded tokens, you now "
                       "have "
-                   << ConfirmationsState::Get()->get_unblinded_tokens()->Count()
+                   << ConfirmationsState::Get()->GetUnblindedTokens()->Count()
                    << " unblinded tokens");
 
   OnDidRefillUnblindedTokens();
@@ -398,7 +391,7 @@ void RefillUnblindedTokens::OnRetry() {
 }
 
 bool RefillUnblindedTokens::ShouldRefillUnblindedTokens() const {
-  if (ConfirmationsState::Get()->get_unblinded_tokens()->Count() >=
+  if (ConfirmationsState::Get()->GetUnblindedTokens()->Count() >=
       kMinimumUnblindedTokens) {
     return false;
   }
@@ -408,7 +401,7 @@ bool RefillUnblindedTokens::ShouldRefillUnblindedTokens() const {
 
 int RefillUnblindedTokens::CalculateAmountOfTokensToRefill() const {
   return kMaximumUnblindedTokens -
-         ConfirmationsState::Get()->get_unblinded_tokens()->Count();
+         ConfirmationsState::Get()->GetUnblindedTokens()->Count();
 }
 
 }  // namespace ads

@@ -9,7 +9,7 @@
 #include <functional>
 #include <utility>
 
-#include "base/check_op.h"
+#include "base/check.h"
 #include "base/time/time.h"
 #include "bat/ads/ads.h"
 #include "bat/ads/ads_client.h"
@@ -46,12 +46,6 @@ RedeemUnblindedPaymentTokens::~RedeemUnblindedPaymentTokens() {
   delegate_ = nullptr;
 }
 
-void RedeemUnblindedPaymentTokens::set_delegate(
-    RedeemUnblindedPaymentTokensDelegate* delegate) {
-  DCHECK_EQ(delegate_, nullptr);
-  delegate_ = delegate;
-}
-
 void RedeemUnblindedPaymentTokens::MaybeRedeemAfterDelay(
     const WalletInfo& wallet) {
   if (is_processing_ || timer_.IsRunning() || retry_timer_.IsRunning()) {
@@ -86,7 +80,7 @@ void RedeemUnblindedPaymentTokens::Redeem() {
 
   BLOG(1, "RedeemUnblindedPaymentTokens");
 
-  if (ConfirmationsState::Get()->get_unblinded_payment_tokens()->IsEmpty()) {
+  if (ConfirmationsState::Get()->GetUnblindedPaymentTokens()->IsEmpty()) {
     BLOG(1, "No unblinded payment tokens to redeem");
 
     ScheduleNextTokenRedemption();
@@ -98,7 +92,7 @@ void RedeemUnblindedPaymentTokens::Redeem() {
   is_processing_ = true;
 
   const privacy::UnblindedTokenList unblinded_tokens =
-      ConfirmationsState::Get()->get_unblinded_payment_tokens()->GetAllTokens();
+      ConfirmationsState::Get()->GetUnblindedPaymentTokens()->GetAllTokens();
 
   RedeemUnblindedPaymentTokensUrlRequestBuilder url_request_builder(
       wallet_, unblinded_tokens);
@@ -134,7 +128,7 @@ void RedeemUnblindedPaymentTokens::OnDidRedeemUnblindedPaymentTokens(
 
   retry_timer_.Stop();
 
-  ConfirmationsState::Get()->get_unblinded_payment_tokens()->RemoveTokens(
+  ConfirmationsState::Get()->GetUnblindedPaymentTokens()->RemoveTokens(
       unblinded_tokens);
   ConfirmationsState::Get()->Save();
 
@@ -157,7 +151,7 @@ void RedeemUnblindedPaymentTokens::ScheduleNextTokenRedemption() {
   const base::Time next_token_redemption_date =
       CalculateNextTokenRedemptionDate();
 
-  ConfirmationsState::Get()->set_next_token_redemption_date(
+  ConfirmationsState::Get()->SetNextTokenRedemptionDate(
       next_token_redemption_date);
   ConfirmationsState::Get()->Save();
 
@@ -195,12 +189,12 @@ void RedeemUnblindedPaymentTokens::OnRetry() {
 
 base::TimeDelta RedeemUnblindedPaymentTokens::CalculateTokenRedemptionDelay() {
   base::Time next_token_redemption_date =
-      ConfirmationsState::Get()->get_next_token_redemption_date();
+      ConfirmationsState::Get()->GetNextTokenRedemptionDate();
 
   if (next_token_redemption_date.is_null()) {
     next_token_redemption_date = CalculateNextTokenRedemptionDate();
 
-    ConfirmationsState::Get()->set_next_token_redemption_date(
+    ConfirmationsState::Get()->SetNextTokenRedemptionDate(
         next_token_redemption_date);
     ConfirmationsState::Get()->Save();
   }

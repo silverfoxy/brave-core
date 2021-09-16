@@ -38,8 +38,8 @@ class BatAdsStatementTest : public UnitTestBase {
     statement_ = std::make_unique<Statement>(ad_rewards);
   }
 
-  privacy::UnblindedTokens* get_unblinded_payment_tokens() {
-    return ConfirmationsState::Get()->get_unblinded_payment_tokens();
+  privacy::UnblindedTokens* GetUnblindedPaymentTokens() {
+    return ConfirmationsState::Get()->GetUnblindedPaymentTokens();
   }
 
   WalletInfo GetWallet() {
