@@ -21,6 +21,7 @@ cr.define('settings', function () {
     isWidevineEnabled() {}
     getRestartNeeded () {}
     wasSignInEnabledAtStartup () {}
+    wasMediaRouterEnabledAtStartup () {}
     isDecentralizedDnsEnabled() {}
     getDecentralizedDnsResolveMethodList(provider) {}
   }
@@ -68,6 +69,10 @@ cr.define('settings', function () {
 
     wasSignInEnabledAtStartup () {
       return loadTimeData.getBoolean('signInAllowedOnNextStartupInitialValue')
+    }
+
+    wasMediaRouterEnabledAtStartup () {
+      return loadTimeData.getBoolean('mediaRouterEnabledInitialValue')
     }
 
     isDecentralizedDnsEnabled () {

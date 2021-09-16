@@ -9,12 +9,14 @@
 #include "base/strings/utf_string_conversions.h"
 #include "brave/browser/ui/webui/settings/brave_privacy_handler.h"
 #include "brave/common/url_constants.h"
+#include "brave/common/pref_names.h"
 #include "brave/components/brave_vpn/buildflags/buildflags.h"
 #include "brave/components/ipfs/ipfs_constants.h"
 #include "brave/components/ipfs/pref_names.h"
 #include "brave/components/sidebar/buildflags/buildflags.h"
 #include "brave/components/version_info/version_info.h"
 #include "chrome/browser/ui/webui/webui_util.h"
+#include "chrome/browser/media/router/media_router_feature.h"
 #include "chrome/common/pref_names.h"
 #include "components/grit/brave_components_strings.h"
 #include "components/prefs/pref_service.h"
@@ -366,11 +368,17 @@ void BraveAddAboutStrings(content::WebUIDataSource* html_source,
   html_source->AddString("aboutProductLicense", license);
 }
 
-void BraveAddSocialBlockingLoadTimeData(content::WebUIDataSource* html_source,
+void BraveAddExtensionSettingsLoadTimeData(content::WebUIDataSource* html_source,
                                         Profile* profile) {
   html_source->AddBoolean(
       "signInAllowedOnNextStartupInitialValue",
       profile->GetPrefs()->GetBoolean(prefs::kSigninAllowedOnNextStartup));
+
+  LOG(ERROR) << "Media Router Initial Value" << media_router::MediaRouterEnabled(profile);
+
+  html_source->AddBoolean(
+      "mediaRouterEnabledInitialValue",
+      media_router::MediaRouterEnabled(profile));
 }
 
 void BraveAddLocalizedStrings(content::WebUIDataSource* html_source,
@@ -379,7 +387,7 @@ void BraveAddLocalizedStrings(content::WebUIDataSource* html_source,
   BraveAddResources(html_source, profile);
   BraveAddAboutStrings(html_source, profile);
   BravePrivacyHandler::AddLoadTimeData(html_source, profile);
-  BraveAddSocialBlockingLoadTimeData(html_source, profile);
+  BraveAddExtensionSettingsLoadTimeData(html_source, profile);
 }
 
 }  // namespace settings

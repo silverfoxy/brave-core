@@ -123,6 +123,12 @@ Polymer({
 
   shouldShowRestartForGoogleLogin_: function(value) {
     return this.browserProxy_.wasSignInEnabledAtStartup() != value;
+  },
+
+  shouldShowRestartForMediaRouter_: function(value) {
+    console.log(this.browserProxy_.wasMediaRouterEnabledAtStartup());
+    console.log(value);
+    return this.browserProxy_.wasMediaRouterEnabledAtStartup() != value;
   }
 
 });
