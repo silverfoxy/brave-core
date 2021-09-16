@@ -16,9 +16,14 @@ import {
   ImportAccountPayloadType,
   RemoveImportedAccountPayloadType,
   ViewPrivateKeyPayloadType,
-  ImportAccountFromJsonPayloadType
+  ImportAccountFromJsonPayloadType,
+  SwapParamsPayloadType
 } from '../constants/action_types'
-import { TokenInfo, UpdateAccountNamePayloadType } from '../../constants/types'
+import {
+  SwapResponse,
+  TokenInfo,
+  UpdateAccountNamePayloadType
+} from '../../constants/types'
 
 export const createWallet = createAction<CreateWalletPayloadType>('createWallet')
 export const restoreWallet = createAction<RestoreWalletPayloadType>('restoreWallet')
@@ -43,3 +48,5 @@ export const updateSelectedAsset = createAction<TokenInfo>('updateSelectedAsset'
 export const setIsFetchingPriceHistory = createAction<boolean>('setIsFetchingPriceHistory')
 export const setShowIsRestoring = createAction<boolean>('setShowIsRestoring')
 export const updateAccountName = createAction<UpdateAccountNamePayloadType>('updateAccountName')
+export const fetchSwapQuote = createAction<SwapParamsPayloadType>('fetchSwapQuote')
+export const setSwapQuote = createAction<SwapResponse>('setSwapQuote')

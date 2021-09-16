@@ -1,3 +1,6 @@
+// @ts-ignore
+import contractMap from '@metamask/contract-metadata'
+
 import { AccountAssetOptionType, AssetOptionType, TokenInfo } from '../constants/types'
 import {
   ALGOIconUrl,
@@ -183,4 +186,60 @@ export const AccountAssetOptions: AccountAssetOptionType[] = [
     assetBalance: '0',
     fiatBalance: '0'
   }
+]
+
+interface ContractMetadata {
+  [contractAddress: string]: {
+    name: string,
+    symbol: string,
+    logo: string,
+    erc20: boolean,
+    decimals: number
+  }
+}
+
+const swapTokens: AccountAssetOptionType[] = Object.entries(contractMap as ContractMetadata).map(
+  ([contractAddress, { name, symbol, decimals, logo, erc20 }]) => ({
+    asset: {
+      contractAddress,
+      name: name,
+      symbol: symbol,
+      icon: require(`@metamask/contract-metadata/images/${logo}`),
+      isErc20: erc20,
+      isErc721: false,
+      decimals: decimals
+    },
+    assetBalance: '0',
+    fiatBalance: '0'
+  })
+)
+
+swapTokens.sort(function (a: AccountAssetOptionType, b: AccountAssetOptionType) {
+  const first = a.asset.name.toLocaleLowerCase()
+  const second = b.asset.name.toLocaleLowerCase()
+
+  if (first < second) {
+    return -1
+  } else if (first > second) {
+    return 1
+  }
+
+  return 0
+})
+
+export const SwapAssetOptions: AccountAssetOptionType[] = [
+  {
+    asset: {
+      contractAddress: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',  // convention followed by 0x
+      name: 'Ethereum',
+      symbol: 'ETH',
+      icon: ETHIconUrl,
+      isErc20: false,
+      isErc721: false,
+      decimals: 18
+    },
+    assetBalance: '0',
+    fiatBalance: '0'
+  },
+  ...swapTokens
 ]

@@ -313,6 +313,7 @@
   },
   "dependencies": {
     "@brave/react-virtualized-auto-sizer": "^1.0.4",
+    "@metamask/contract-metadata": "^1.29.0",
     "@types/jszip": "^3.1.6",
     "@types/parse-torrent": "^5.8.3",
     "@types/webtorrent": "^0.109.0",
@@ -321,6 +322,7 @@
     "bluebird": "^3.5.1",
     "core-js": "^3.9.1",
     "date-fns": "^2.15.0",
+    "fuse.js": "^6.4.6",
     "jszip": "^3.2.2",
     "prettier-bytes": "^1.0.4",
     "qr-image": "^3.2.0",

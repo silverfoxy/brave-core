@@ -16,9 +16,11 @@ import {
   ImportAccountPayloadType,
   RemoveImportedAccountPayloadType,
   ViewPrivateKeyPayloadType,
-  ImportAccountFromJsonPayloadType
+  ImportAccountFromJsonPayloadType,
+  SwapParamsPayloadType
 } from '../constants/action_types'
 import { NewUnapprovedTxAdded } from '../../common/constants/action_types'
+import getSwapConfig from '../../constants/swap.config'
 
 type Store = MiddlewareAPI<Dispatch<AnyAction>, any>
 
@@ -133,6 +135,33 @@ handler.on(WalletPageActions.updateAccountName.getType(), async (store, payload:
 handler.on(WalletActions.newUnapprovedTxAdded.getType(), async (store, payload: NewUnapprovedTxAdded) => {
   const pageHandler = (await getAPIProxy()).pageHandler
   await pageHandler.showApprovePanelUI()
+})
+
+handler.on(WalletPageActions.fetchSwapQuote.getType(), async (store, payload: SwapParamsPayloadType) => {
+  const swapController = (await getAPIProxy()).swapController
+
+  const {
+    fromAsset,
+    toAsset,
+    accountAddress,
+    slippageTolerance,
+    gasPrice
+  } = payload
+
+  const config = getSwapConfig(payload.networkChainId)
+  const quote = await swapController.getPriceQuote({
+    takerAddress: accountAddress,
+    sellAmount: '',
+    buyAmount: '1000000000000000000000',
+    buyToken: toAsset.asset.contractAddress || toAsset.asset.symbol,
+    sellToken: fromAsset.asset.contractAddress || fromAsset.asset.symbol,
+    buyTokenPercentageFee: config.buyTokenPercentageFee,
+    slippagePercentage: slippageTolerance.slippage / 100,
+    feeRecipient: config.feeRecipient,
+    gasPrice: gasPrice
+  })
+
+  quote.success && store.dispatch(WalletPageActions.setSwapQuote(quote.response))
 })
 
 // TODO(bbondy): Remove - Example usage:

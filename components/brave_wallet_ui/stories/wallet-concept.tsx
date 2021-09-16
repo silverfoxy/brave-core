@@ -21,14 +21,15 @@ import {
   ExpirationPresetObjectType,
   ToOrFromType,
   TokenInfo,
-  EthereumChain
+  EthereumChain,
+  BuySendSwapTypes
 } from '../constants/types'
 import Onboarding from './screens/onboarding'
 import BackupWallet from './screens/backup-wallet'
 import * as Result from '../common/types/result'
 
 // import { NavOptions } from '../options/side-nav-options'
-import { AccountAssetOptions, NewAssetOptions } from '../options/asset-options'
+import { AccountAssetOptions, NewAssetOptions, SwapAssetOptions } from '../options/asset-options'
 import { WyreAccountAssetOptions } from '../options/wyre-asset-options'
 import { SlippagePresetOptions } from '../options/slippage-preset-options'
 import { ExpirationPresetOptions } from '../options/expiration-preset-options'
@@ -86,6 +87,7 @@ export const _DesktopWalletConcept = (args: { onboarding: boolean, locked: boole
   const [toAmount, setToAmount] = React.useState('')
   const [isRestoring, setIsRestoring] = React.useState<boolean>(false)
   const [importError, setImportError] = React.useState<boolean>(false)
+  const [selectedWidgetTab, setSelectedWidgetTab] = React.useState<BuySendSwapTypes>('buy')
 
   const onToggleRestore = () => {
     setIsRestoring(!isRestoring)
@@ -343,6 +345,10 @@ export const _DesktopWalletConcept = (args: { onboarding: boolean, locked: boole
     }
   }
 
+  const onChangeWidgetTab = (tab: BuySendSwapTypes) => () => {
+    setSelectedWidgetTab(tab)
+  }
+
   const flipSwapAssets = () => {
     setFromAsset(toAsset)
     setToAsset(fromAsset)
@@ -585,6 +591,7 @@ export const _DesktopWalletConcept = (args: { onboarding: boolean, locked: boole
             exchangeRate={exchangeRate}
             orderExpiration={orderExpiration}
             slippageTolerance={slippageTolerance}
+            selectedTab={selectedWidgetTab}
             swapFromAsset={fromAsset}
             accounts={mockUserAccounts}
             selectedNetwork={selectedNetwork}
@@ -596,6 +603,7 @@ export const _DesktopWalletConcept = (args: { onboarding: boolean, locked: boole
             fromAssetBalance={fromAssetBalance}
             toAssetBalance={toAssetBalance}
             toAddress={toAddress}
+            onChangeTab={onChangeWidgetTab}
             onSubmitBuy={onSubmitBuy}
             onSetBuyAmount={onSetBuyAmount}
             onSetSendAmount={onSetSendAmount}
@@ -616,7 +624,7 @@ export const _DesktopWalletConcept = (args: { onboarding: boolean, locked: boole
             onSelectPresetSendAmount={onSelectPresetSendAmount}
             buyAssetOptions={WyreAccountAssetOptions}
             sendAssetOptions={AccountAssetOptions}
-            swapAssetOptions={AccountAssetOptions}
+            swapAssetOptions={SwapAssetOptions}
             networkList={mockNetworks}
           />
         </WalletWidgetStandIn>

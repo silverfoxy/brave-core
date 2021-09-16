@@ -22,6 +22,7 @@ export interface Props {
   accounts: UserAccountType[]
   networkList: EthereumChain[]
   orderType: OrderTypes
+  selectedTab: BuySendSwapTypes,
   swapToAsset: AccountAssetOptionType
   swapFromAsset: AccountAssetOptionType
   selectedNetwork: EthereumChain
@@ -39,6 +40,7 @@ export interface Props {
   buyAssetOptions: AccountAssetOptionType[]
   sendAssetOptions: AccountAssetOptionType[]
   swapAssetOptions: AccountAssetOptionType[]
+  onChangeTab: (tab: BuySendSwapTypes) => () => void
   onSubmitBuy: (asset: AccountAssetOptionType) => void
   onSubmitSend: () => void
   onSubmitSwap: () => void
@@ -71,6 +73,7 @@ function BuySendSwap (props: Props) {
     exchangeRate,
     slippageTolerance,
     orderExpiration,
+    selectedTab,
     buyAmount,
     sendAmount,
     fromAmount,
@@ -81,6 +84,7 @@ function BuySendSwap (props: Props) {
     buyAssetOptions,
     sendAssetOptions,
     swapAssetOptions,
+    onChangeTab,
     onSubmitBuy,
     onSubmitSend,
     onSubmitSwap,
@@ -100,14 +104,13 @@ function BuySendSwap (props: Props) {
     onSelectPresetFromAmount,
     onSelectPresetSendAmount
   } = props
-  const [selectedTab, setSelectedTab] = React.useState<BuySendSwapTypes>('buy')
 
   React.useMemo(() => {
     if (selectedTab === 'buy' && !BuySupportedChains.includes(selectedNetwork.chainId)) {
-      setSelectedTab('send')
+      onChangeTab('send')()
     }
     if (selectedTab === 'swap' && !SwapSupportedChains.includes(selectedNetwork.chainId)) {
-      setSelectedTab('send')
+      onChangeTab('send')()
     }
   }, [selectedNetwork, selectedTab, BuySupportedChains])
 
@@ -119,9 +122,6 @@ function BuySendSwap (props: Props) {
     return !SwapSupportedChains.includes(selectedNetwork.chainId)
   }, [SwapSupportedChains, selectedNetwork])
 
-  const changeTab = (tab: BuySendSwapTypes) => () => {
-    setSelectedTab(tab)
-  }
 
   return (
     <Layout
@@ -129,7 +129,7 @@ function BuySendSwap (props: Props) {
       isBuyDisabled={isBuyDisabled}
       isSwapDisabled={isSwapDisabled}
       selectedTab={selectedTab}
-      onChangeTab={changeTab}
+      onChangeTab={onChangeTab}
     >
       {selectedTab === 'swap' &&
         <Swap

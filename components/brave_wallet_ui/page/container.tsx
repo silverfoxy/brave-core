@@ -38,7 +38,8 @@ import {
   WalletAccountType,
   TokenInfo,
   UpdateAccountNamePayloadType,
-  EthereumChain
+  EthereumChain,
+  BuySendSwapTypes
 } from '../constants/types'
 // import { NavOptions } from '../options/side-nav-options'
 import BuySendSwap from '../stories/screens/buy-send-swap'
@@ -47,7 +48,7 @@ import BackupWallet from '../stories/screens/backup-wallet'
 import { formatPrices } from '../utils/format-prices'
 import { BuyAssetUrl } from '../utils/buy-asset-url'
 import { convertMojoTimeToJS } from '../utils/mojo-time'
-import { AssetOptions, AccountAssetOptions } from '../options/asset-options'
+import { AssetOptions, AccountAssetOptions, SwapAssetOptions } from '../options/asset-options'
 import { WyreAccountAssetOptions } from '../options/wyre-asset-options'
 import { SlippagePresetOptions } from '../options/slippage-preset-options'
 import { ExpirationPresetOptions } from '../options/expiration-preset-options'
@@ -116,18 +117,36 @@ function Container (props: Props) {
   const [slippageTolerance, setSlippageTolerance] = React.useState<SlippagePresetObjectType>(SlippagePresetOptions[0])
   const [orderExpiration, setOrderExpiration] = React.useState<ExpirationPresetObjectType>(ExpirationPresetOptions[0])
   const [orderType, setOrderType] = React.useState<OrderTypes>('market')
+  const [selectedWidgetTab, setSelectedWidgetTab] = React.useState<BuySendSwapTypes>('buy')
   // const [showRestore, setShowRestore] = React.useState<boolean>(false)
 
   // TODO (DOUGLAS): This needs to be set up in the Reducer in a future PR
   const [fromAsset, setFromAsset] = React.useState<AccountAssetOptionType>(AccountAssetOptions[0])
   const [toAsset, setToAsset] = React.useState<AccountAssetOptionType>(AccountAssetOptions[1])
+
   const onSelectTransactAsset = (asset: AccountAssetOptionType, toOrFrom: ToOrFromType) => {
     if (toOrFrom === 'from') {
       setFromAsset(asset)
     } else {
       setToAsset(asset)
     }
+
+    if (selectedWidgetTab === 'swap') {
+      props.walletPageActions.fetchSwapQuote({
+        fromAsset,
+        toAsset,
+        accountAddress: selectedAccount.address,
+        slippageTolerance,
+        gasPrice: '100',
+        networkChainId: selectedNetwork.chainId
+      })
+    }
   }
+
+  const onChangeWidgetTab = (tab: BuySendSwapTypes) => () => {
+    setSelectedWidgetTab(tab)
+  }
+
   const flipSwapAssets = () => {
     setFromAsset(toAsset)
     setToAsset(fromAsset)
@@ -570,6 +589,7 @@ function Container (props: Props) {
             accounts={accounts}
             networkList={networkList}
             orderType={orderType}
+            selectedTab={selectedWidgetTab}
             swapToAsset={toAsset}
             swapFromAsset={fromAsset}
             selectedNetwork={selectedNetwork}
@@ -586,7 +606,8 @@ function Container (props: Props) {
             toAddress={toAddress}
             buyAssetOptions={WyreAccountAssetOptions}
             sendAssetOptions={selectedAccount.tokens}
-            swapAssetOptions={AccountAssetOptions}
+            swapAssetOptions={SwapAssetOptions}
+            onChangeTab={onChangeWidgetTab}
             onSetBuyAmount={onSetBuyAmount}
             onSetToAddress={onSetToAddress}
             onSelectExpiration={onSelectExpiration}

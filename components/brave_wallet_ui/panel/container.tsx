@@ -49,7 +49,7 @@ import {
 } from '../constants/types'
 import { AppsList } from '../options/apps-list-options'
 import LockPanel from '../components/extension/lock-panel'
-import { AccountAssetOptions } from '../options/asset-options'
+import { AccountAssetOptions, SwapAssetOptions } from '../options/asset-options'
 import { WyreAccountAssetOptions } from '../options/wyre-asset-options'
 import { BuyAssetUrl } from '../utils/buy-asset-url'
 import { GetNetworkInfo } from '../utils/network-utils'
@@ -406,7 +406,9 @@ function Container (props: Props) {
       assets = WyreAccountAssetOptions
     } else if (selectedPanel === 'send') {
       assets = selectedAccount.tokens
-    } else {  // swap
+    } else if (selectedPanel === 'swap') {
+      assets = SwapAssetOptions
+    } else {
       assets = AccountAssetOptions
     }
     return (
