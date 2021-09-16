@@ -12,7 +12,7 @@
 #include "base/time/time.h"
 #include "bat/ads/ads_aliases.h"
 #include "bat/ads/internal/account/confirmations/confirmation_info_aliases.h"
-#include "bat/ads/internal/catalog/catalog_issuers_info.h"
+#include "bat/ads/internal/tokens/issuers/issuer_info_aliases.h"
 #include "bat/ads/transaction_info_aliases.h"
 
 namespace base {
@@ -43,8 +43,8 @@ class ConfirmationsState {
   void Load();
   void Save();
 
-  CatalogIssuersInfo get_catalog_issuers() const;
-  void set_catalog_issuers(const CatalogIssuersInfo& catalog_issuers);
+  void SetIssuers(const IssuerList& issuers);
+  IssuerList GetIssuers() const;
 
   ConfirmationList get_failed_confirmations() const;
   void append_failed_confirmation(const ConfirmationInfo& confirmation);
@@ -72,8 +72,8 @@ class ConfirmationsState {
   std::string ToJson();
   bool FromJson(const std::string& json);
 
-  CatalogIssuersInfo catalog_issuers_;
-  bool ParseCatalogIssuersFromDictionary(base::DictionaryValue* dictionary);
+  IssuerList issuers_;
+  bool ParseIssuersFromDictionary(base::DictionaryValue* dictionary);
 
   ConfirmationList failed_confirmations_;
   base::Value GetFailedConfirmationsAsDictionary(

@@ -175,12 +175,10 @@ OBJC_EXPORT
     NS_SWIFT_NAME(detailsForCurrentCycle(_:));
 
 /// Toggle that the user liked the given ad and more like it should be shown
-- (void)toggleThumbsUpForAd:(NSString*)creativeInstanceId
-              creativeSetID:(NSString*)creativeSetID;
+- (void)toggleThumbsUpForAd:(const ads::AdContentInfo&)info;
 
 /// Toggle that the user disliked the given ad and it shouldn't be shown again
-- (void)toggleThumbsDownForAd:(NSString*)creativeInstanceId
-                creativeSetID:(NSString*)creativeSetID;
+- (void)toggleThumbsDownForAd:(const ads::AdContentInfo&)info;
 
 #pragma mark -
 

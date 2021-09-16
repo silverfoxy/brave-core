@@ -21,10 +21,10 @@ class DictionaryValue;
 namespace ads {
 
 class AdRewards;
-class ConfirmationType;
+class AdType;
 class ConfirmationsState;
+class ConfirmationType;
 class RedeemUnblindedToken;
-struct CatalogIssuersInfo;
 
 namespace privacy {
 class TokenGeneratorInterface;
@@ -40,9 +40,8 @@ class Confirmations : public RedeemUnblindedTokenDelegate {
   void AddObserver(ConfirmationsObserver* observer);
   void RemoveObserver(ConfirmationsObserver* observer);
 
-  void SetCatalogIssuers(const CatalogIssuersInfo& catalog_issuers);
-
   void Confirm(const std::string& creative_instance_id,
+               const AdType& ad_type,
                const ConfirmationType& confirmation_type);
 
   void RetryAfterDelay();
@@ -58,6 +57,7 @@ class Confirmations : public RedeemUnblindedTokenDelegate {
   ConfirmationInfo CreateConfirmation(
       const std::string& creative_instance_id,
       const ConfirmationType& confirmation_type,
+      const AdType& ad_type,
       const base::DictionaryValue& user_data) const;
 
   Timer retry_timer_;

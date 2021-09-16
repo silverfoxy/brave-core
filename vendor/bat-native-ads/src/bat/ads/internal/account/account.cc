@@ -20,6 +20,8 @@
 #include "bat/ads/internal/logging.h"
 #include "bat/ads/internal/privacy/tokens/token_generator_interface.h"
 #include "bat/ads/internal/privacy/unblinded_tokens/unblinded_tokens.h"
+#include "bat/ads/internal/tokens/issuers/issuers.h"
+#include "bat/ads/internal/tokens/issuers/issuers_util.h"
 #include "bat/ads/internal/tokens/redeem_unblinded_payment_tokens/redeem_unblinded_payment_tokens.h"
 #include "bat/ads/internal/tokens/refill_unblinded_tokens/refill_unblinded_tokens.h"
 #include "bat/ads/statement_info.h"
@@ -28,6 +30,7 @@ namespace ads {
 
 Account::Account(privacy::TokenGeneratorInterface* token_generator)
     : ad_rewards_(std::make_unique<AdRewards>()),
+      issuers_(std::make_unique<Issuers>()),
       confirmations_(
           std::make_unique<Confirmations>(token_generator, ad_rewards_.get())),
       redeem_unblinded_payment_tokens_(
@@ -39,6 +42,7 @@ Account::Account(privacy::TokenGeneratorInterface* token_generator)
   confirmations_->AddObserver(this);
 
   ad_rewards_->set_delegate(this);
+  issuers_->set_delegate(this);
   redeem_unblinded_payment_tokens_->set_delegate(this);
   refill_unblinded_tokens_->set_delegate(this);
 }
@@ -82,14 +86,18 @@ WalletInfo Account::GetWallet() const {
   return wallet_->Get();
 }
 
-void Account::SetCatalogIssuers(const CatalogIssuersInfo& catalog_issuers) {
-  confirmations_->SetCatalogIssuers(catalog_issuers);
-  NotifyCatalogIssuersDidChange(catalog_issuers);
+void Account::MaybeGetIssuers() const {
+  if (!ShouldRewardUser()) {
+    return;
+  }
+
+  issuers_->MaybeFetch();
 }
 
 void Account::Deposit(const std::string& creative_instance_id,
+                      const AdType& ad_type,
                       const ConfirmationType& confirmation_type) {
-  confirmations_->Confirm(creative_instance_id, confirmation_type);
+  confirmations_->Confirm(creative_instance_id, ad_type, confirmation_type);
 }
 
 StatementInfo Account::GetStatement(const int64_t from_timestamp,
@@ -117,6 +125,8 @@ void Account::ProcessTransactions() {
   ProcessUnclearedTransactions();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 void Account::TopUpUnblindedTokens() {
   if (!ShouldRewardUser()) {
     return;
@@ -125,8 +135,6 @@ void Account::TopUpUnblindedTokens() {
   const WalletInfo wallet = GetWallet();
   refill_unblinded_tokens_->MaybeRefill(wallet);
 }
-
-///////////////////////////////////////////////////////////////////////////////
 
 void Account::ProcessUnclearedTransactions() {
   const WalletInfo wallet = GetWallet();
@@ -151,17 +159,25 @@ void Account::NotifyInvalidWallet() const {
   }
 }
 
-void Account::NotifyCatalogIssuersDidChange(
-    const CatalogIssuersInfo& catalog_issuers) const {
-  for (AccountObserver& observer : observers_) {
-    observer.OnCatalogIssuersDidChange(catalog_issuers);
-  }
-}
-
 void Account::NotifyStatementOfAccountsDidChange() const {
   for (AccountObserver& observer : observers_) {
     observer.OnStatementOfAccountsDidChange();
   }
+}
+
+void Account::OnDidGetIssuers(const IssuerList& issuers) {
+  if (!HasIssuersChanged(issuers)) {
+    return;
+  }
+
+  ConfirmationsState::Get()->SetIssuers(issuers);
+  ConfirmationsState::Get()->Save();
+
+  TopUpUnblindedTokens();
+}
+
+void Account::OnFailedToGetIssuers() {
+  BLOG(0, "Failed to get issuers");
 }
 
 void Account::OnDidConfirm(const double estimated_redemption_value,

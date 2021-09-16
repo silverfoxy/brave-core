@@ -6,6 +6,8 @@
 #ifndef BRAVE_VENDOR_BAT_NATIVE_ADS_SRC_BAT_ADS_INTERNAL_PRIVACY_UNBLINDED_TOKENS_UNBLINDED_TOKEN_INFO_H_
 #define BRAVE_VENDOR_BAT_NATIVE_ADS_SRC_BAT_ADS_INTERNAL_PRIVACY_UNBLINDED_TOKENS_UNBLINDED_TOKEN_INFO_H_
 
+#include "bat/ads/ad_type.h"
+#include "bat/ads/confirmation_type.h"
 #include "wrapper.hpp"
 
 namespace ads {
@@ -24,6 +26,8 @@ struct UnblindedTokenInfo {
 
   UnblindedToken value;
   PublicKey public_key;
+  ConfirmationType confirmation_type = ConfirmationType::kUndefined;
+  AdType ad_type = AdType::kUndefined;
 };
 
 }  // namespace privacy

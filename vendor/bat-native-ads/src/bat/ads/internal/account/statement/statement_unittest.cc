@@ -67,7 +67,7 @@ TEST_F(BatAdsStatementTest, GetForThisMonth) {
   // Arrange
   const URLEndpoints endpoints = {
       {// Get payments
-       R"(/v1/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
+       R"(/v2/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
        {{net::HTTP_OK, R"(
             [
               {
@@ -115,7 +115,7 @@ TEST_F(BatAdsStatementTest, GetForThisMonth) {
 TEST_F(BatAdsStatementTest, GetForThisMonthWithInternalServerErrorForPayments) {
   // Arrange
   const URLEndpoints endpoints = {
-      {R"(/v1/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
+      {R"(/v2/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
        {{net::HTTP_INTERNAL_SERVER_ERROR, ""}}}};
 
   MockUrlRequest(ads_client_mock_, endpoints);
@@ -154,7 +154,7 @@ TEST_F(BatAdsStatementTest, GetForThisMonthWithInternalServerErrorForPayments) {
 TEST_F(BatAdsStatementTest, GetForThisMonthWithInvalidJsonForPayments) {
   // Arrange
   const URLEndpoints endpoints = {
-      {R"(/v1/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
+      {R"(/v2/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
        {{net::HTTP_OK, "invalid_json"}}}};
 
   MockUrlRequest(ads_client_mock_, endpoints);
@@ -194,7 +194,7 @@ TEST_F(BatAdsStatementTest, GetForPastTwoMonths) {
   // Arrange
   const URLEndpoints endpoints = {
       {// Get payments
-       R"(/v1/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
+       R"(/v2/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
        {{net::HTTP_OK, R"(
             [
               {
@@ -250,7 +250,7 @@ TEST_F(BatAdsStatementTest, GetForPastTwoMonthsSplitOverTwoYears) {
   // Arrange
   const URLEndpoints endpoints = {
       {// Get payments
-       R"(/v1/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
+       R"(/v2/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
        {{net::HTTP_OK, R"(
             [
               {
@@ -307,7 +307,7 @@ TEST_F(BatAdsStatementTest,
   // Arrange
   const URLEndpoints endpoints = {
       {// Get payments
-       R"(/v1/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
+       R"(/v2/confirmation/payment/27a39b2f-9b2e-4eb0-bbb2-2f84447496e7)",
        {{net::HTTP_OK, R"(
             [
               {

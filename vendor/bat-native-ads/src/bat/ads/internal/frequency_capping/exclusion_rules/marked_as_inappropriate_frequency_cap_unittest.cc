@@ -42,8 +42,8 @@ TEST_F(BatAdsMarkedAsInappropriateFrequencyCapTest, DoNotAllowAd) {
   CreativeAdInfo ad;
   ad.creative_set_id = kCreativeSetId;
 
-  Client::Get()->ToggleFlagAd(ad.creative_instance_id, ad.creative_set_id,
-                              false);
+  Client::Get()->ToggleFlaggedAd(ad.creative_instance_id, ad.creative_set_id,
+                                 false);
 
   // Act
   MarkedAsInappropriateFrequencyCap frequency_cap;

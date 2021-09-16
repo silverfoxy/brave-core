@@ -14,6 +14,7 @@
 namespace ads {
 
 namespace {
+const char kCreativeInstanceId[] = "72a8d5ce-b785-4764-b3cd-e2e310d71778";
 const char kCreativeSetId[] = "654f10df-fbc4-4a92-8d43-2edf73734a60";
 }  // namespace
 
@@ -42,8 +43,11 @@ TEST_F(BatAdsDislikeFrequencyCapTest, DoNotAllowAd) {
   CreativeAdInfo ad;
   ad.creative_set_id = kCreativeSetId;
 
-  Client::Get()->ToggleAdThumbDown(ad.creative_instance_id, ad.creative_set_id,
-                                   AdContentActionType::kNeutral);
+  AdContentInfo ad_content;
+  ad_content.creative_instance_id = kCreativeInstanceId;
+  ad_content.creative_set_id = kCreativeSetId;
+  ad_content.like_action = AdContentLikeActionType::kNeutral;
+  Client::Get()->ToggleAdThumbDown(ad_content);
 
   // Act
   DislikeFrequencyCap frequency_cap;

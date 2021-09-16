@@ -15,14 +15,18 @@
 #include "bat/ads/internal/account/ad_rewards/ad_rewards_delegate.h"
 #include "bat/ads/internal/account/confirmations/confirmations_observer.h"
 #include "bat/ads/internal/privacy/unblinded_tokens/unblinded_token_info_aliases.h"
+#include "bat/ads/internal/tokens/issuers/issuer_info_aliases.h"
+#include "bat/ads/internal/tokens/issuers/issuers_delegate.h"
 #include "bat/ads/internal/tokens/redeem_unblinded_payment_tokens/redeem_unblinded_payment_tokens_delegate.h"
 #include "bat/ads/internal/tokens/refill_unblinded_tokens/refill_unblinded_tokens_delegate.h"
 
 namespace ads {
 
 class AdRewards;
+class AdType;
 class Confirmations;
 class ConfirmationType;
+class Issuers;
 class RedeemUnblindedPaymentTokens;
 class RefillUnblindedTokens;
 class Statement;
@@ -36,6 +40,7 @@ class TokenGeneratorInterface;
 
 class Account : public AdRewardsDelegate,
                 public ConfirmationsObserver,
+                public IssuersDelegate,
                 public RedeemUnblindedPaymentTokensDelegate,
                 public RefillUnblindedTokensDelegate {
  public:
@@ -50,9 +55,10 @@ class Account : public AdRewardsDelegate,
 
   WalletInfo GetWallet() const;
 
-  void SetCatalogIssuers(const CatalogIssuersInfo& catalog_issuers);
+  void MaybeGetIssuers() const;
 
   void Deposit(const std::string& creative_instance_id,
+               const AdType& ad_type,
                const ConfirmationType& confirmation_type);
 
   StatementInfo GetStatement(const int64_t from_timestamp,
@@ -62,12 +68,11 @@ class Account : public AdRewardsDelegate,
 
   void ProcessTransactions();
 
-  void TopUpUnblindedTokens();
-
  private:
   base::ObserverList<AccountObserver> observers_;
 
   std::unique_ptr<AdRewards> ad_rewards_;
+  std::unique_ptr<Issuers> issuers_;
   std::unique_ptr<Confirmations> confirmations_;
   std::unique_ptr<RedeemUnblindedPaymentTokens>
       redeem_unblinded_payment_tokens_;
@@ -75,17 +80,21 @@ class Account : public AdRewardsDelegate,
   std::unique_ptr<Statement> statement_;
   std::unique_ptr<Wallet> wallet_;
 
+  void TopUpUnblindedTokens();
+
   void ProcessUnclearedTransactions();
 
   void NotifyWalletDidUpdate(const WalletInfo& wallet) const;
   void NotifyWalletDidChange(const WalletInfo& wallet) const;
   void NotifyInvalidWallet() const;
-  void NotifyCatalogIssuersDidChange(
-      const CatalogIssuersInfo& catalog_issuers) const;
   void NotifyStatementOfAccountsDidChange() const;
 
   // AdRewardsDelegate:
   void OnDidReconcileAdRewards() override;
+
+  // IssuersDelegate:
+  void OnDidGetIssuers(const IssuerList& issuers) override;
+  void OnFailedToGetIssuers() override;
 
   // ConfirmationsObserver:
   void OnDidConfirm(const double estimated_redemption_value,

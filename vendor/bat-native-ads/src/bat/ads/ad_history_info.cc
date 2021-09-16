@@ -69,17 +69,17 @@ bool AdHistoryInfo::FromJson(const std::string& json) {
   return true;
 }
 
-void SaveToJson(JsonWriter* writer, const AdHistoryInfo& ad_history) {
+void SaveToJson(JsonWriter* writer, const AdHistoryInfo& info) {
   writer->StartObject();
 
   writer->String("timestamp_in_seconds");
-  writer->Uint64(ad_history.timestamp_in_seconds);
+  writer->Uint64(info.timestamp_in_seconds);
 
   writer->String("ad_content");
-  SaveToJson(writer, ad_history.ad_content);
+  SaveToJson(writer, info.ad_content);
 
   writer->String("category_content");
-  SaveToJson(writer, ad_history.category_content);
+  SaveToJson(writer, info.category_content);
 
   writer->EndObject();
 }

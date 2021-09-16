@@ -24,6 +24,8 @@
 #include "bat/ads/internal/privacy/challenge_bypass_ristretto_util.h"
 #include "bat/ads/internal/privacy/unblinded_tokens/unblinded_token_info.h"
 #include "bat/ads/internal/security/confirmations/confirmations_util.h"
+#include "bat/ads/internal/tokens/issuers/issuer_types.h"
+#include "bat/ads/internal/tokens/issuers/issuers_util.h"
 #include "bat/ads/internal/tokens/redeem_unblinded_token/create_confirmation_url_request_builder.h"
 #include "bat/ads/internal/tokens/redeem_unblinded_token/create_confirmation_util.h"
 #include "bat/ads/internal/tokens/redeem_unblinded_token/fetch_payment_token_url_request_builder.h"
@@ -57,6 +59,11 @@ void RedeemUnblindedToken::set_delegate(
 void RedeemUnblindedToken::Redeem(const ConfirmationInfo& confirmation) {
   BLOG(1, "Redeem unblinded token");
 
+  if (!IssuerExistsForType(IssuerType::kPayments)) {
+    OnFailedToRedeemUnblindedToken(confirmation, /* should_retry */ true);
+    return;
+  }
+
   if (!confirmation.created) {
     CreateConfirmation(confirmation);
     return;
@@ -70,7 +77,7 @@ void RedeemUnblindedToken::Redeem(const ConfirmationInfo& confirmation) {
 void RedeemUnblindedToken::CreateConfirmation(
     const ConfirmationInfo& confirmation) {
   BLOG(1, "CreateConfirmation");
-  BLOG(2, "POST /v1/confirmation/{confirmation_id}/{credential}");
+  BLOG(2, "POST /v2/confirmation/{confirmation_id}/{credential}");
 
   CreateConfirmationUrlRequestBuilder url_request_builder(confirmation);
   mojom::UrlRequestPtr url_request = url_request_builder.Build();
@@ -118,7 +125,7 @@ void RedeemUnblindedToken::FetchPaymentToken(
   DCHECK(!confirmation.id.empty());
 
   BLOG(1, "FetchPaymentToken");
-  BLOG(2, "GET /v1/confirmation/{confirmation_id}/paymentToken");
+  BLOG(2, "GET /v2/confirmation/{confirmation_id}/paymentToken");
 
   FetchPaymentTokenUrlRequestBuilder url_request_builder(confirmation);
   mojom::UrlRequestPtr url_request = url_request_builder.Build();
@@ -222,6 +229,13 @@ void RedeemUnblindedToken::OnFetchPaymentToken(
     return;
   }
 
+  if (!PublicKeyExistsForType(IssuerType::kPayments, *public_key_base64)) {
+    BLOG(0, "Response public key " << *public_key_base64 << " does not match"
+                                   << " issuers public key");
+    OnFailedToRedeemUnblindedToken(confirmation, /* should_retry */ true);
+    return;
+  }
+
   // Get batch dleq proof
   const std::string* batch_dleq_proof_base64 =
       payment_token_dictionary->FindStringKey("batchProof");
@@ -289,6 +303,8 @@ void RedeemUnblindedToken::OnFetchPaymentToken(
   privacy::UnblindedTokenInfo unblinded_payment_token;
   unblinded_payment_token.value = batch_dleq_proof_unblinded_tokens.front();
   unblinded_payment_token.public_key = public_key;
+  unblinded_payment_token.confirmation_type = confirmation.type;
+  unblinded_payment_token.ad_type = confirmation.ad_type;
 
   OnDidRedeemUnblindedToken(confirmation, unblinded_payment_token);
 }

@@ -18,7 +18,8 @@ UnblindedTokenInfo::~UnblindedTokenInfo() = default;
 
 bool UnblindedTokenInfo::operator==(const UnblindedTokenInfo& rhs) const {
   return public_key.encode_base64() == rhs.public_key.encode_base64() &&
-         value.encode_base64() == rhs.value.encode_base64();
+         value.encode_base64() == rhs.value.encode_base64() &&
+         confirmation_type == rhs.confirmation_type && ad_type == rhs.ad_type;
 }
 
 bool UnblindedTokenInfo::operator!=(const UnblindedTokenInfo& rhs) const {

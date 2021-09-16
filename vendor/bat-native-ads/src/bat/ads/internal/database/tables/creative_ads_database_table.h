@@ -16,6 +16,13 @@
 
 namespace ads {
 
+using GetCreativeAdCallback =
+    std::function<void(const bool success,
+                       const std::string& creative_instance_id,
+                       const CreativeAdInfo& ad)>;
+
+struct CreativeAdInfo;
+
 namespace database {
 namespace table {
 
@@ -30,6 +37,11 @@ class CreativeAds : public Table {
 
   void Delete(ResultCallback callback);
 
+  void GetForCreativeInstanceId(const std::string& creative_instance_id,
+                                GetCreativeAdCallback callback);
+
+  CreativeAdInfo GetFromRecord(mojom::DBRecord* record) const;
+
   std::string get_table_name() const override;
 
   void Migrate(mojom::DBTransaction* transaction,
@@ -41,6 +53,10 @@ class CreativeAds : public Table {
 
   std::string BuildInsertOrUpdateQuery(mojom::DBCommand* command,
                                        const CreativeAdList& creative_ads);
+
+  void OnGetForCreativeInstanceId(mojom::DBCommandResponsePtr response,
+                                  const std::string& creative_instance_id,
+                                  GetCreativeAdCallback callback);
 
   void CreateTableV16(mojom::DBTransaction* transaction);
   void MigrateToV16(mojom::DBTransaction* transaction);

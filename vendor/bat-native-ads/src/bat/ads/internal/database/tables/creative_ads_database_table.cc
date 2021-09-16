@@ -54,6 +54,71 @@ void CreativeAds::Delete(ResultCallback callback) {
       std::bind(&OnResultCallback, std::placeholders::_1, callback));
 }
 
+void CreativeAds::GetForCreativeInstanceId(
+    const std::string& creative_instance_id,
+    GetCreativeAdCallback callback) {
+  CreativeAdInfo creative_ad;
+
+  if (creative_instance_id.empty()) {
+    callback(/* success */ false, creative_instance_id, creative_ad);
+    return;
+  }
+
+  const std::string query = base::StringPrintf(
+      "SELECT "
+      "creative_instance_id, "
+      "conversion, "
+      "per_day, "
+      "per_week, "
+      "per_month, "
+      "total_max, "
+      "value, "
+      "split_test_group, "
+      "target_url "
+      "FROM %s AS ca "
+      "WHERE ca.creative_instance_id = '%s'",
+      get_table_name().c_str(), creative_instance_id.c_str());
+
+  mojom::DBCommandPtr command = mojom::DBCommand::New();
+  command->type = mojom::DBCommand::Type::READ;
+  command->command = query;
+
+  command->record_bindings = {
+      mojom::DBCommand::RecordBindingType::STRING_TYPE,  // creative_instance_id
+      mojom::DBCommand::RecordBindingType::BOOL_TYPE,    // conversion
+      mojom::DBCommand::RecordBindingType::INT_TYPE,     // per_day
+      mojom::DBCommand::RecordBindingType::INT_TYPE,     // per_week
+      mojom::DBCommand::RecordBindingType::INT_TYPE,     // per_month
+      mojom::DBCommand::RecordBindingType::INT_TYPE,     // total_max
+      mojom::DBCommand::RecordBindingType::DOUBLE_TYPE,  // value
+      mojom::DBCommand::RecordBindingType::STRING_TYPE,  // split_test_group
+      mojom::DBCommand::RecordBindingType::STRING_TYPE   // target_url
+  };
+
+  mojom::DBTransactionPtr transaction = mojom::DBTransaction::New();
+  transaction->commands.push_back(std::move(command));
+
+  AdsClientHelper::Get()->RunDBTransaction(
+      std::move(transaction),
+      std::bind(&CreativeAds::OnGetForCreativeInstanceId, this,
+                std::placeholders::_1, creative_instance_id, callback));
+}
+
+CreativeAdInfo CreativeAds::GetFromRecord(mojom::DBRecord* record) const {
+  CreativeAdInfo creative_ad;
+
+  creative_ad.creative_instance_id = ColumnString(record, 0);
+  creative_ad.conversion = ColumnBool(record, 1);
+  creative_ad.per_day = ColumnInt(record, 2);
+  creative_ad.per_week = ColumnInt(record, 3);
+  creative_ad.per_month = ColumnInt(record, 4);
+  creative_ad.total_max = ColumnInt(record, 5);
+  creative_ad.value = ColumnDouble(record, 6);
+  creative_ad.target_url = ColumnString(record, 7);
+
+  return creative_ad;
+}
+
 std::string CreativeAds::get_table_name() const {
   return kTableName;
 }
@@ -118,6 +183,28 @@ std::string CreativeAds::BuildInsertOrUpdateQuery(
       "target_url) VALUES %s",
       get_table_name().c_str(),
       BuildBindingParameterPlaceholders(9, count).c_str());
+}
+
+void CreativeAds::OnGetForCreativeInstanceId(
+    mojom::DBCommandResponsePtr response,
+    const std::string& creative_instance_id,
+    GetCreativeAdCallback callback) {
+  if (!response ||
+      response->status != mojom::DBCommandResponse::Status::RESPONSE_OK) {
+    BLOG(0, "Failed to get creative ad");
+    callback(/* success */ false, creative_instance_id, {});
+    return;
+  }
+
+  if (response->result->get_records().size() != 1) {
+    BLOG(0, "Failed to get creative ad");
+    callback(/* success */ false, creative_instance_id, {});
+    return;
+  }
+
+  mojom::DBRecord* record = response->result->get_records().at(0).get();
+  const CreativeAdInfo creative_ad = GetFromRecord(record);
+  callback(/* success */ true, creative_instance_id, creative_ad);
 }
 
 void CreativeAds::CreateTableV16(mojom::DBTransaction* transaction) {
