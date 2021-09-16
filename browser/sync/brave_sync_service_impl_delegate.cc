@@ -83,7 +83,7 @@ void BraveSyncServiceImplDelegate::RecordP3ASyncStatus() {
   // 0 - sync is disabled
   // 1 - one device in chain
   // 2 - two devices in chain
-  // 3 - threee or more devices in chain
+  // 3 - three or more devices in chain
   int p3a_value = std::min(num_devices, 3);
 
   base::UmaHistogramExactLinear("Brave.Sync.Status.2", p3a_value, 3);
