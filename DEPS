@@ -35,14 +35,14 @@ hooks = [
     'name': 'download_rust_deps',
     'pattern': '.',
     'condition': 'checkout_android',
-    'action': ['vpython3', 'src/brave/script/download_rust_deps.py', '--platform', 'android'],
+    'action': ['vendor/depot_tools/vpython3', 'src/brave/script/download_rust_deps.py', '--platform', 'android'],
   },
   {
     # Download rust deps if necessary for macOS, Windows and Linux
     'name': 'download_rust_deps',
     'pattern': '.',
     'condition': 'not checkout_android',
-    'action': ['vpython3', 'src/brave/script/download_rust_deps.py'],
+    'action': ['vendor/depot_tools/vpython3', 'src/brave/script/download_rust_deps.py'],
   },
   {
     # Build brave-sync
