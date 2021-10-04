@@ -48,14 +48,14 @@ hooks = [
     # Build brave-sync
     'name': 'build_brave_sync',
     'pattern': '.',
-    'action': ['python', 'script/build-simple-js-bundle.py', '--repo_dir_path', 'src/brave/components/brave_sync/extension/brave-sync'],
+    'action': ['python', 'script/build-simple-js-bundle.py', '--repo_dir_path', 'components/brave_sync/extension/brave-sync'],
     'condition': 'not checkout_android',
   },
   {
     # Build brave-sync android
     'name': 'build_brave_sync',
     'pattern': '.',
-    'action': ['python', 'script/build-simple-js-bundle.py', '--repo_dir_path', 'src/brave/components/brave_sync/extension/brave-sync-android'],
+    'action': ['python', 'script/build-simple-js-bundle.py', '--repo_dir_path', 'components/brave_sync/extension/brave-sync-android'],
     'condition': 'checkout_android',
   },
   {
